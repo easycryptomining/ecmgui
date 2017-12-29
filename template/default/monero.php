@@ -12,7 +12,7 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
 <div class="row">
     <div class="col-md-6">
         <h4>Pending : <?= $poolData->data ?> <?= strtoupper($moneroCurrencyShort) ?></h4>
-        <h4><a href="https://<?= $moneroCurrencyShort ?>.nanopool.org/account/<?= $wallet ?>" target="_blank">Pool</a></h4>
+        <h4><a href="https://<?= $moneroCurrencyShort ?>.nanopool.org/account/<?= $moneroWallet ?>" target="_blank">Pool</a></h4>
         <h4><a href="https://coinmarketcap.com/currencies/<?= $moneroCurrencyLong ?>/" target="_blank">Market</a></h4>
     </div>
     <div class="col-md-6">
@@ -56,7 +56,7 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
         if ((time() - $lastShare) < 3600) {
             $connection = @fsockopen($hostname, '22');
             if (is_resource($connection)) {
-                $uptime = get_uptime($machine, $last_machine, $last_uptime, $sshUser, $sshKeyPub, $sshKeyPriv);
+                $uptime = get_uptime($name, $last_machine, $last_uptime, $sshUser, $sshKeyPub, $sshKeyPriv);
                 $hash_refresh .= "getHash('$link', '$name-hash');";
                 
             } else {
@@ -89,7 +89,7 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
 
             $power = round($parts[7] / 1000);
             $kwh = round(24 * 365 * ($power / 1000));
-            $yearCost = round($kwh * 0.14);
+            $yearCost = round($kwh * $powerCost);
             $monthCost = round($yearCost / 12);
 
             $power_refresh .= "getPower('wemo-$name', '$name-power');";
@@ -139,9 +139,9 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
         <th>Total</th>
         <th colspan="4">
             <?php
-            $nanopoolUrl = "https://api.nanopool.org/v1/$currencyShort/hashrate/$wallet";
+            $nanopoolUrl = "https://api.nanopool.org/v1/$moneroCurrencyShort/hashrate/$moneroWallet";
             $data = get_nanopool($nanopoolUrl);
-            echo $data->data . ' ' . $speedUnit
+            echo $data->data . ' ' . $moneroSpeedUnit
             ?>
         </th>
     </tr>

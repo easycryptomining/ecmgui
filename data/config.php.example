@@ -44,3 +44,7 @@ $moneroMachines = array(
 $sshUser = "[yourUserName]";
 $sshKeyPub = "[absolutePath]/ssh/id_rsa.pub";
 $sshKeyPriv = "[absolutePath]/ssh/id_rsa";
+
+// -----------------------------------------------------------------------------
+// Power cost by kWh
+$powerCost = 0.14;
