@@ -137,7 +137,7 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
     ?>
     <tr>
         <th>Total</th>
-        <th colspan="4">
+        <th colspan="5">
             <?php
             $nanopoolUrl = "https://api.nanopool.org/v1/$moneroCurrencyShort/hashrate/$moneroWallet";
             $data = get_nanopool($nanopoolUrl);

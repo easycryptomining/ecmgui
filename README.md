@@ -1,5 +1,9 @@
-# ecmgui
+# Easy Crypto Mining GUI
 Monitor and control your Monero XMR-STAK mining rig, Netgear Arlo wireless security camera and Belkin Wemo switch / insight. 
+
+http://www.easycryptomining.com
+
+![Screenshot](http://www.easycryptomining.com/images/ecmgui.png)
 
 ## Features
 ### Arlo
