@@ -1,0 +1,46 @@
+<?php
+// -----------------------------------------------------------------------------
+// Site title
+$title = "EcmGui";
+// The full gui url
+$siteUrl = "[http://www.example.com/monero]";
+// Which template to use : muste be a folder name in /template/
+$template = "default";
+
+// -----------------------------------------------------------------------------
+// Netgear Arlo wireless security camera
+$arlo = false;
+$arloUsername = "[you@example.com]";
+$arloPassword = "[YourStrongPassword]";
+
+// -----------------------------------------------------------------------------
+// Belkin Wemo switch 
+$wemo = false;
+// The id must be register on the network (must ping)
+$wemoSwitch = array(
+    "[idSwitchOne]" => "[friendlyNameOne]",
+    "[idSwitchTwo]" => "[friendlyNameTwo]",
+);
+
+// -----------------------------------------------------------------------------
+// Monero rigs
+$monero = true;
+$moneroCurrencyLong = 'monero';
+$moneroCurrencyShort = 'xmr';
+$moneroWallet = '[yourWalletAddress]';
+$moneroWalletAmount = 0.0000000;
+$moneroSpeedUnit = 'H/s';
+$moneroPoolBalanceApi = "https://api.nanopool.org/v1/$moneroCurrencyShort/balance/$moneroWallet";
+$moneroPoolWorkerApi = "https://api.nanopool.org/v1/$moneroCurrencyShort/workers/$moneroWallet";
+$moneroMachines = array(
+    // "rig name register on the network (must ping)" => "xmr-stak gui port",
+    "[xmrstak1]" => "[8080]",
+    "[xmrstak2]" => "[8080]",
+    "[xmrstak3]" => "[8080]",
+);
+
+// -----------------------------------------------------------------------------
+// SSH
+$sshUser = "[yourUserName]";
+$sshKeyPub = "[absolutePath]/ssh/id_rsa.pub";
+$sshKeyPriv = "[absolutePath]/ssh/id_rsa";

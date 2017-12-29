@@ -1,0 +1,33 @@
+{
+    "name": "easycryptomining/ecmgui",
+    "description": "",
+    "homepage": "http://www.easycryptomining.com/",
+    "keywords": [
+        "Monero",
+        "Cryptocurrency",
+        "Arlo",
+        "Wemo",
+        "Soap",
+        "php-wemo"
+    ],
+    "license": [
+        "Apache-2.0"
+    ],
+    "authors": [
+        {
+            "name": "Easy Crypto Mining",
+            "email": "thomas@easycryptomining.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.6",
+        "a15lam/php-wemo": "~0.2.2",
+        "a15lam/workspace": "~0.1.0",
+        "clue/ssdp-react": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "a15lam\\PhpWemo\\": "vendor/a15lam/php-wemo/src/"
+        }
+    }
+}
