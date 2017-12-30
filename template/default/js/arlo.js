@@ -1,27 +1,25 @@
 $(function () {
-    $('#secuBtn').bootstrapToggle();
-    $('#secuBtn').change(function () {
+    $('#arloBtn').bootstrapToggle();
+    $('#arloBtn').change(function () {
         checkedStatus = $(this).prop('checked');
-
         $.ajax({
             cache: false,
             url: 'api/arlo.php',
             type: 'GET',
             data: 'action=' + checkedStatus,
-            dataType: 'html',
-            success: function (code_html, statut) {
+            dataType: 'json',
+            success: function (result) {
                 $('#alert').removeClass("hidden");
-                $('#alert').html(code_html);
+                $('#alert').removeClass("alert-danger");
+                $('#alert').addClass("alert-info");
+                $('#alert').html(result);
             },
-
-            error: function (resultat, statut, erreur) {
+            error: function (result, status, error) {
                 $('#alert').removeClass("hidden");
-                $('#alert').html('Error :  ' + erreur);
+                $('#alert').removeClass("alert-info");
+                $('#alert').addClass("alert-danger");
+                $('#alert').html('Error :  ' + error);
             },
-
-            complete: function (resultat, statut) {
-                $("#secuPanelBody").load('secu.php');
-            }
         });
     });
 })

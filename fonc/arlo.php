@@ -1,7 +1,7 @@
 <?php
 
 function get_arlo_status($arloUsername, $arloPassword) {
-    $command = "python ".__DIR__."/arlo/arlo_get_status.py $arloUsername $arloPassword";
+    $command = "python " . __DIR__ . "/arlo/arlo_get_status.py $arloUsername $arloPassword";
     $output = `$command`;
     $output = str_replace("u'", '"', $output);
     $output = str_replace("'", '"', $output);
@@ -17,13 +17,13 @@ function get_arlo_status($arloUsername, $arloPassword) {
 }
 
 function arm_arlo($arloUsername, $arloPassword) {
-    $command = "python ".__DIR__."/arlo/arlo_arm.py $arloUsername $arloPassword";
+    $command = "python " . __DIR__ . "/arlo/arlo_arm.py $arloUsername $arloPassword";
     $output = `$command`;
-    return "Armed";
+    return json_encode("Armed");
 }
 
 function disarm_arlo($arloUsername, $arloPassword) {
-    $command = "python ".__DIR__."/arlo/arlo_disarm.py $arloUsername $arloPassword";
+    $command = "python " . __DIR__ . "/arlo/arlo_disarm.py $arloUsername $arloPassword";
     $output = `$command`;
-    return "Disarmed";
+    return json_encode("Disarmed");
 }

@@ -1,8 +1,9 @@
 <?php
+
 header('Content-type: application/json');
 
-require_once '../data/config.php';
-require_once '../fonc/arlo.php';
+require_once __DIR__ . '/../data/config.php';
+require_once __DIR__ . '/../fonc/arlo.php';
 
 $action = $_GET['action'];
 
