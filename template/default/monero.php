@@ -1,10 +1,11 @@
 <?php
 ini_set('default_socket_timeout', 2);
 
-require_once '../../data/config.php';
-require_once '../../fonc/common.php';
-require_once '../../fonc/monero.php';
-require_once '../../vendor/autoload.php';
+require_once __DIR__ . '/../../data/config.php';
+require_once __DIR__ . '/../../fonc/common.php';
+require_once __DIR__ . '/../../fonc/monero.php';
+require_once __DIR__ . '/../../fonc/wemo.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 $poolData = get_nanopool($moneroPoolBalanceApi);
 ?>
@@ -40,6 +41,7 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
     $machines = $data->data;
     $power_refresh = "";
     $hash_refresh = "";
+    $asToggle = false;
 
     foreach ($machines as $machine) {
         $name = $machine->id;
@@ -58,7 +60,7 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
             if (is_resource($connection)) {
                 $uptime = get_uptime($name, $last_machine, $last_uptime, $sshUser, $sshKeyPub, $sshKeyPriv);
                 $hash_refresh .= "getHash('$link', '$name-hash');";
-                
+                $alivedMachines[] = $link;
             } else {
                 $uptime = '-';
             }
@@ -74,20 +76,15 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
 
         $power = '-';
 
-        $ping = ping("wemo-$name");
+        $wemoId = "wemo-$name";
+        $ping = ping($wemoId);
         if ($ping) {
+            $asToggle = true;
             $checked = '';
-            $status = '';
+            $status = get_wemo_status($wemoId);
 
-            $device = \a15lam\PhpWemo\Discovery::lookupDevice('id', "wemo-$name");
-            $client = new \a15lam\PhpWemo\WemoClient($device['ip'], $device['port']);
-            $deviceClass = $device['class_name'];
-            $myDevice = new $deviceClass($device['id'], $client);
-            $status = $myDevice->state();
-            $params = $myDevice->getParams();
-            $parts = explode('|', $params);
+            $power = get_wemo_power($wemoId);
 
-            $power = round($parts[7] / 1000);
             $kwh = round(24 * 365 * ($power / 1000));
             $yearCost = round($kwh * $powerCost);
             $monthCost = round($yearCost / 12);
@@ -100,29 +97,7 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
             if ($status == 1) {
                 $checked = 'checked ';
             }
-            echo '<td><input ' . $checked . 'id="wemo-' . $name . '" class="btn-toggle" data-toggle="toggle" type="checkbox" autocomplete="off"></td>';
-            echo "<script>
-                    $(function () {
-                        $('#wemo-$name').bootstrapToggle();
-                        $('#wemo-$name').change(function () {
-                            checkedStatus = $(this).prop('checked');
-                            id = $(this).prop('id');
-
-                            $.ajax({
-                                cache: false,
-                                url: 'api/wemo.php',
-                                type: 'GET',
-                                data: 'id=' + id + '&action=' + checkedStatus,
-                                dataType: 'html',
-
-                                error: function (resultat, statut, erreur) {
-                                    $('#alert').removeClass(\"hidden\");
-                                    $('#alert').html('Error :  ' + erreur);
-                                },
-                            });
-                        });
-                    })
-                </script>";
+            echo '<td><input ' . $checked . 'id="wemo-' . $name . '" class="btn-toggle wemo-insight" data-toggle="toggle" type="checkbox" autocomplete="off"></td>';
         } else {
             echo '<td>' . $power . '</td>';
             echo '<td>-</td>';
@@ -141,16 +116,47 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
             <?php
             $nanopoolUrl = "https://api.nanopool.org/v1/$moneroCurrencyShort/hashrate/$moneroWallet";
             $data = get_nanopool($nanopoolUrl);
-            echo $data->data . ' ' . $moneroSpeedUnit
+            echo '<span id="total-hash">' . $data->data . ' ' . $moneroSpeedUnit . ' (pool)</span>';
             ?>
         </th>
     </tr>
 </table>
 <?php
+if ($asToggle) {
+    ?>
+    <script>
+        $(function () {
+            $('.wemo-insight').bootstrapToggle();
+            $('.wemo-insight').change(function () {
+                checkedStatus = $(this).prop('checked');
+                id = $(this).prop('id');
+
+                $.ajax({
+                    cache: false,
+                    url: 'api/wemo.php',
+                    type: 'GET',
+                    data: 'id=' + id + '&action=' + checkedStatus,
+                    dataType: 'html',
+
+                    error: function (result, status, error) {
+                        $('#alert').removeClass("hidden");
+                        $('#alert').removeClass("alert-info");
+                        $('#alert').addClass("alert-danger");
+                        $('#alert').html('Error :  ' + error);
+                    },
+                });
+            });
+        })
+    </script>
+    <?php
+}
+?>
+<?php
 echo '<script>
         setInterval(function () {
             ' . ($power_refresh != '' ? $power_refresh : "") . '
             ' . ($hash_refresh != '' ? $hash_refresh : "") . '
+            ' . (count($alivedMachines) != 0 ? 'getTotalHash(' . json_encode($alivedMachines) . ', "total-hash")' : "") . '
         }, 5000);
 </script>';
 ?>
