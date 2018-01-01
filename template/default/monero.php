@@ -77,13 +77,13 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
         
         $power = '-';
 
-        $wemoId = "wemo-$name";
+        $wemoId = $moneroMachinesInsight[$name];
         $ping = ping($wemoId);
         if ($ping) {
             $asToggle = true;
             $checked = '';
             $powerAmp = '';
-            $alivedInsight[] = "wemo-$name";
+            $alivedInsight[] = $wemoId;
             $status = get_wemo_status($wemoId);
 
             $power = get_wemo_power($wemoId);

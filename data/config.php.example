@@ -34,15 +34,22 @@ $moneroSpeedUnit = 'H/s';
 $moneroPoolBalanceApi = "https://api.nanopool.org/v1/$moneroCurrencyShort/balance/$moneroWallet";
 $moneroPoolWorkerApi = "https://api.nanopool.org/v1/$moneroCurrencyShort/workers/$moneroWallet";
 $moneroMachines = array(
-    // "rig name register on the network (must ping)" => "xmr-stak gui port",
+    // rig name register on the network (must ping) or IP" => "xmr-stak gui port",
     "[xmrstak1]" => "[8080]",
     "[xmrstak2]" => "[8080]",
     "[xmrstak3]" => "[8080]",
 );
 $moneroMachinesAmp = array(
+    // rig amps for display OPTIONAL
     "[xmrstak1]" => 1.85,
     "[xmrstak2]" => 2.90,
     "[xmrstak3]" => null,
+);
+$moneroMachinesInsight = array(
+    // rig wemo insight plug name (must ping)
+    "[xmrstak1]" => "[wemo-xmrstak1]",
+    "[xmrstak2]" => "[wemo-xmrstak2]",
+    "[xmrstak3]" => "[wemo-xmrstak3]",
 );
 
 // -----------------------------------------------------------------------------
