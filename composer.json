@@ -1,6 +1,6 @@
 {
     "name": "easycryptomining/ecmgui",
-    "description": "Monitor and control your Monero XMR-STAK mining rig, Netgear Arlo wireless security camera and Belkin Wemo switch / insight.",
+    "description": "A web based GUI to monitor and control your Monero XMR-STAK mining rigs, Netgear Arlo wireless security camera and Belkin Wemo switch / insight.",
     "homepage": "http://www.easycryptomining.com/",
     "keywords": [
         "Monero",
