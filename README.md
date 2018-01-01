@@ -3,7 +3,7 @@ A web based GUI to monitor and control your Monero XMR-STAK mining rigs, Netgear
 
 http://www.easycryptomining.com
 
-![Screenshot](http://www.easycryptomining.com/images/ecmgui.png)
+![Screenshot](http://www.easycryptomining.com/images/ecmgui.png?)
 
 ## Features
 ### Arlo
