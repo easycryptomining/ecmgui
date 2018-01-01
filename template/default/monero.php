@@ -33,11 +33,9 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
 
 <p class="clearfix"></p>
 <table class="table table-hover table-bordered">
-    <tr><th>Worker</th><th>Hasrate</th><th>Uptime</th><th>Power</th><th>Power Cost</th><th>Status</th></tr>
+    <tr><th>Status</th><th>Worker</th><th>Hasrate</th><th>Uptime</th><th>Temperature</th><th>Power</th><th>Power Cost</th><th>Power Status</th></tr>
     <?php
     $data = get_nanopool($moneroPoolWorkerApi);
-    $last_machine = "";
-    $last_uptime = "";
     $machines = $data->data;
     $power_refresh = "";
     $hash_refresh = "";
@@ -58,22 +56,25 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
         if ((time() - $lastShare) < 3600) {
             $connection = @fsockopen($hostname, '22');
             if (is_resource($connection)) {
-                $uptime = get_uptime($name, $last_machine, $last_uptime, $sshUser, $sshKeyPub, $sshKeyPriv);
+                $uptime = get_uptime($name, $sshUser, $sshKeyPub, $sshKeyPriv);
                 $hash_refresh .= "getHash('$link', '$name-hash');";
                 $alivedMachines[] = $link;
             } else {
                 $uptime = '-';
             }
             fclose($connection);
-            echo '<tr class="success">';
+            echo '<tr><td class="text-center"><i class="fa fa-power-off green"></i></td>';
         } else {
-            echo '<tr class="danger">';
+            echo '<tr><td class="text-center"><i class="fa fa-power-off red"></i></td>';
         }
 
         echo '<td><a href="' . $link . '" target="_blank">' . $name . '</a></td>';
-        echo '<td><span id="' . $name . '-hash">' . $hashrate . ' ' . $moneroSpeedUnit . ' (pool)</span></td>';
+        echo '<td><span class="big-numbers" id="' . $name . '-hash">' . $hashrate . '</span> ' . $moneroSpeedUnit . '</td>';
         echo '<td>' . $uptime . '</td>';
 
+        $temperature = get_temp($name, $sshUser, $sshKeyPub, $sshKeyPriv);
+        echo '<td>' . $temperature . '</td>';
+        
         $power = '-';
 
         $wemoId = "wemo-$name";
@@ -81,6 +82,8 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
         if ($ping) {
             $asToggle = true;
             $checked = '';
+            $powerAmp = '';
+            $alivedInsight[] = "wemo-$name";
             $status = get_wemo_status($wemoId);
 
             $power = get_wemo_power($wemoId);
@@ -89,9 +92,13 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
             $yearCost = round($kwh * $powerCost);
             $monthCost = round($yearCost / 12);
 
+            if (isset($moneroMachinesAmp[$name])) {
+                $powerAmp = '<br />' . $moneroMachinesAmp[$name] . ' A';
+            }
+
             $power_refresh .= "getPower('wemo-$name', '$name-power');";
 
-            echo '<td><span id="' . $name . '-power">' . $power . '</span> W<br />' . $kwh . ' kWh / year</td>';
+            echo '<td><span class="big-numbers" id="' . $name . '-power">' . $power . '</span> W<br /><small>' . $kwh . ' kWh / year' . $powerAmp . '</small></td>';
             echo '<td>' . $monthCost . ' € / month<br />' . $yearCost . ' € / year</td>';
 
             if ($status == 1) {
@@ -105,20 +112,23 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
         }
 
         echo '</tr>';
-
-        $last_machine = $hostname;
-        $last_uptime = $uptime;
     }
     ?>
     <tr>
         <th>Total</th>
-        <th colspan="5">
-            <?php
-            $nanopoolUrl = "https://api.nanopool.org/v1/$moneroCurrencyShort/hashrate/$moneroWallet";
-            $data = get_nanopool($nanopoolUrl);
-            echo '<span id="total-hash">' . $data->data . ' ' . $moneroSpeedUnit . ' (pool)</span>';
-            ?>
+        <th>&nbsp;</th>
+        <th>
+            <span class="big-numbers" id="total-hash">-</span> <?= $moneroSpeedUnit ?>
         </th>
+        <th>&nbsp;</th>
+        <th>&nbsp;</th>
+        <th>
+            <span class="big-numbers" id="total-power">-</span> W
+        </th>
+        <th>
+            <span id="total-power-cost">-</span>
+        </th>
+        <th>&nbsp;</th>
     </tr>
 </table>
 <?php
@@ -157,6 +167,7 @@ echo '<script>
             ' . ($power_refresh != '' ? $power_refresh : "") . '
             ' . ($hash_refresh != '' ? $hash_refresh : "") . '
             ' . (count($alivedMachines) != 0 ? 'getTotalHash(' . json_encode($alivedMachines) . ', "total-hash")' : "") . '
+            ' . (count($alivedInsight) != 0 ? 'getTotalPower(' . json_encode($alivedInsight) . ', "total-power")' : "") . '
         }, 5000);
 </script>';
 ?>

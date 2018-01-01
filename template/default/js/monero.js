@@ -8,7 +8,7 @@ function getHash(url, spanId) {
         success: function (data) {
             var jsonObj = jQuery.parseJSON(data);
             var total = jsonObj.hashrate.total[0];
-            $('#' + spanId + '').html(total + ' H/s');
+            $('#' + spanId + '').html(total.toFixed(0));
         }
     });
 }
@@ -30,6 +30,6 @@ function getTotalHash(url, spanId) {
             }
         });
     });
-    $('#' + spanId + '').html(total.toFixed(2) + ' H/s');
+    $('#' + spanId + '').html(total.toFixed(0));
 }
 ;

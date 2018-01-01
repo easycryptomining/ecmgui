@@ -1,0 +1,21 @@
+.big-numbers {
+    font-size: large;
+    color: #32A0EE;
+    font-weight: bold;
+}
+
+small {
+    color: grey;
+}
+
+.green {
+    color: green;
+}
+
+.red {
+    color: red;
+}
+
+th {
+    background-color: #E9E9E9;
+}

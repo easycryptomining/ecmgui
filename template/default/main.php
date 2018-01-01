@@ -7,7 +7,9 @@
         <script src="template/<?= $template ?>/js/jquery-2.2.2.min.js"></script>
         <link href="template/<?= $template ?>/css/bootstrap.min.css" rel="stylesheet">
         <link href="template/<?= $template ?>/css/bootstrap-theme.min.css" rel="stylesheet">
+        <link href="template/<?= $template ?>/css/fontawesome-all.min.css" rel="stylesheet">
         <link href="template/<?= $template ?>/css/bootstrap-toggle.min.css" rel="stylesheet">
+        <link href="template/<?= $template ?>/css/main.css" rel="stylesheet">
     </head>
     <body>
         <div class="container-fluid" role="main">
