@@ -16,7 +16,7 @@
             <p class="clearfix"></p>
 
             <div id="alert" class="alert alert-info hidden" role="alert"></div>
-
+            
             <?php if ($arlo == true) { ?>
                 <div id="arloPanel" class="panel panel-default">
                     <div id="arloPanelHeading" class="panel-heading">Arlo</div>
@@ -29,7 +29,11 @@
                 </script>
             <?php } ?>
 
-            <?php if ($wemo == true) { ?>
+            <?php
+            if ($wemo == true) {
+                require_once __DIR__ . '/../../vendor/autoload.php';
+                \a15lam\PhpWemo\Discovery::find(true);
+                ?>
                 <div id="wemoPanel" class="panel panel-default">
                     <div id="wemoPanelHeading" class="panel-heading">Wemo</div>
                     <div id="wemoPanelBody" class="panel-body"></div>

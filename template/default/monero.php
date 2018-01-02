@@ -35,49 +35,56 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
 <table class="table table-hover table-bordered">
     <tr><th>Status</th><th>Worker</th><th>Hasrate</th><th>Uptime</th><th>Temperature</th><th>Power</th><th>Power Cost</th><th>Power Status</th></tr>
     <?php
-    $data = get_nanopool($moneroPoolWorkerApi);
-    $machines = $data->data;
     $power_refresh = "";
     $hash_refresh = "";
     $asToggle = false;
-
+    
+    // Get nanopool workers
+    $data = get_nanopool($moneroPoolWorkerApi);
+    // Extract machines list with data
+    $machines = $data->data;
+    
     foreach ($machines as $machine) {
-        $name = $machine->id;
-        $pieces = explode("-", $name);
-        $hostname = $pieces[0];
+        // Use worker id as hostname
+        $hostname = $machine->id;
+        // Create machine link with hostname and xmr-stak port in config.php
+        $link = 'http://' . $hostname . ':' . $moneroMachines[$hostname];
 
-        $link = 'http://' . $hostname . ':' . $moneroMachines[$name];
-
-        $hashrate = $machine->hashrate;
-
+        $hashrate = '-';
         $uptime = '-';
+        $temperature='-';
+        $power = '-';
+        
+        // Get last share send to nanopool
         $lastShare = $machine->lastShare;
-
+        
         if ((time() - $lastShare) < 3600) {
-            $connection = @fsockopen($hostname, '22');
-            if (is_resource($connection)) {
-                $uptime = get_uptime($name, $sshUser, $sshKeyPub, $sshKeyPriv);
-                $hash_refresh .= "getHash('$link', '$name-hash');";
+            $connection = false;
+            $ping = ping($hostname);
+            if ($ping) {
+                $connection = @fsockopen($hostname, '22');
+            }
+
+            if ($connection != false) {
+                $uptime = get_uptime($hostname, $sshUser, $sshKeyPub, $sshKeyPriv);
+                $temperature = get_temp($hostname, $sshUser, $sshKeyPub, $sshKeyPriv);
+                $hash_refresh .= "getHash('$link', '$hostname-hash');";
                 $alivedMachines[] = $link;
+                fclose($connection);
             } else {
                 $uptime = '-';
             }
-            fclose($connection);
             echo '<tr><td class="text-center"><i class="fa fa-power-off green"></i></td>';
         } else {
             echo '<tr><td class="text-center"><i class="fa fa-power-off red"></i></td>';
         }
 
-        echo '<td><a href="' . $link . '" target="_blank">' . $name . '</a></td>';
-        echo '<td><span class="big-numbers" id="' . $name . '-hash">' . $hashrate . '</span> ' . $moneroSpeedUnit . '</td>';
+        echo '<td><a href="' . $link . '" target="_blank">' . $hostname . '</a></td>';
+        echo '<td><span class="big-numbers" id="' . $hostname . '-hash">' . $hashrate . '</span> ' . $moneroSpeedUnit . '</td>';
         echo '<td>' . $uptime . '</td>';
-
-        $temperature = get_temp($name, $sshUser, $sshKeyPub, $sshKeyPriv);
         echo '<td>' . $temperature . '</td>';
-        
-        $power = '-';
 
-        $wemoId = $moneroMachinesInsight[$name];
+        $wemoId = $moneroMachinesInsight[$hostname];
         $ping = ping($wemoId);
         if ($ping) {
             $asToggle = true;
@@ -92,19 +99,19 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
             $yearCost = round($kwh * $powerCost);
             $monthCost = round($yearCost / 12);
 
-            if (isset($moneroMachinesAmp[$name])) {
-                $powerAmp = '<br />' . $moneroMachinesAmp[$name] . ' A';
+            if (isset($moneroMachinesAmp[$hostname])) {
+                $powerAmp = '<br />' . $moneroMachinesAmp[$hostname] . ' A';
             }
 
-            $power_refresh .= "getPower('wemo-$name', '$name-power');";
+            $power_refresh .= "getPower('wemo-$hostname', '$hostname-power');";
 
-            echo '<td><span class="big-numbers" id="' . $name . '-power">' . $power . '</span> W<br /><small>' . $kwh . ' kWh / year' . $powerAmp . '</small></td>';
+            echo '<td><span class="big-numbers" id="' . $hostname . '-power">' . $power . '</span> W<br /><small>' . $kwh . ' kWh / year' . $powerAmp . '</small></td>';
             echo '<td>' . $monthCost . ' € / month<br />' . $yearCost . ' € / year</td>';
 
             if ($status == 1) {
                 $checked = 'checked ';
             }
-            echo '<td><input ' . $checked . 'id="wemo-' . $name . '" class="btn-toggle wemo-insight" data-toggle="toggle" type="checkbox" autocomplete="off"></td>';
+            echo '<td><input ' . $checked . 'id="wemo-' . $hostname . '" class="btn-toggle wemo-insight" data-toggle="toggle" type="checkbox" autocomplete="off"></td>';
         } else {
             echo '<td>' . $power . '</td>';
             echo '<td>-</td>';
