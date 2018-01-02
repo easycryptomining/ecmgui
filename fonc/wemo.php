@@ -39,7 +39,6 @@ function get_wemo_power($wemoId) {
 
 function get_wemo_status($wemoId) {
     $device = \a15lam\PhpWemo\Discovery::lookupDevice('id', $wemoId);
-    var_dump($device);
     if (!empty($device)) {
         $client = new \a15lam\PhpWemo\WemoClient($device['ip'], $device['port']);
         $deviceClass = $device['class_name'];
