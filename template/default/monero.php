@@ -38,12 +38,12 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
     $power_refresh = "";
     $hash_refresh = "";
     $asToggle = false;
-    
+
     // Get nanopool workers
     $data = get_nanopool($moneroPoolWorkerApi);
     // Extract machines list with data
     $machines = $data->data;
-    
+
     foreach ($machines as $machine) {
         // Use worker id as hostname
         $hostname = $machine->id;
@@ -52,12 +52,12 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
 
         $hashrate = '-';
         $uptime = '-';
-        $temperature='-';
+        $temperature = '-';
         $power = '-';
-        
+
         // Get last share send to nanopool
         $lastShare = $machine->lastShare;
-        
+
         if ((time() - $lastShare) < 3600) {
             $connection = false;
             $ping = ping($hostname);
@@ -175,6 +175,6 @@ echo '<script>
             ' . ($hash_refresh != '' ? $hash_refresh : "") . '
             ' . (count($alivedMachines) != 0 ? 'getTotalHash(' . json_encode($alivedMachines) . ', "total-hash")' : "") . '
             ' . (count($alivedInsight) != 0 ? 'getTotalPower(' . json_encode($alivedInsight) . ', "total-power")' : "") . '
-        }, 5000);
+        }, ' . $autoRefresh . ');
 </script>';
 ?>

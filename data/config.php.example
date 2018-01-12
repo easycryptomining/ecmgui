@@ -51,7 +51,8 @@ $moneroMachinesInsight = array(
     "[xmrstak2]" => "[wemo-xmrstak2]",
     "[xmrstak3]" => "[wemo-xmrstak3]",
 );
-
+// Auto refresh of power and hashrate in ms
+$autoRefresh = "60000"; // Here every 1 minute
 // -----------------------------------------------------------------------------
 // SSH
 $sshUser = "[yourUserName]";
