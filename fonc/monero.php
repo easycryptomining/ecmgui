@@ -18,6 +18,12 @@ function get_uptime($machine, $sshUser, $sshKeyPub, $sshKeyPriv) {
         $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
         $uptime = stream_get_contents($stream_out);
         $uptime = str_replace('up ', '', $uptime);
+        $uptime = str_replace('years', 'Y', $uptime);
+        $uptime = str_replace('year', 'Y', $uptime);
+        $uptime = str_replace('mounths', 'M', $uptime);
+        $uptime = str_replace('mounth', 'M', $uptime);
+        $uptime = str_replace('weeks', 'W', $uptime);
+        $uptime = str_replace('week', 'W', $uptime);
         $uptime = str_replace('days', 'd', $uptime);
         $uptime = str_replace('day', 'd', $uptime);
         $uptime = str_replace('hours', 'h', $uptime);
@@ -27,7 +33,7 @@ function get_uptime($machine, $sshUser, $sshKeyPub, $sshKeyPriv) {
         $uptime = str_replace('seconds', 's', $uptime);
         $uptime = str_replace('second', 's', $uptime);
         $uptime = str_replace(' ', '', $uptime);
-        $uptime = str_replace(',', '-', $uptime);
+        $uptime = str_replace(',', ' ', $uptime);
 
         return $uptime;
     } else {
