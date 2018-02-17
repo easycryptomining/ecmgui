@@ -32,7 +32,7 @@ $poolData = get_nanopool($moneroPoolBalanceApi);
 <script src="template/<?= $template ?>/js/wemo.js"></script>
 
 <p class="clearfix"></p>
-<table class="table table-hover table-bordered">
+<table class="table table-hover table-bordered table-responsive">
     <tr><th>Status</th><th>Worker</th><th>Hasrate</th><th>Uptime</th><th>Temperature</th><th>Power</th><th>Power Cost</th><th>Power Status</th></tr>
     <?php
     $power_refresh = "";
