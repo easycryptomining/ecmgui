@@ -1,5 +1,5 @@
 --
--- File generated with SQLiteStudio v3.1.1 on mer. juin 20 01:16:04 2018
+-- File generated with SQLiteStudio v3.1.1 on sam. juin 23 17:45:43 2018
 --
 -- Text encoding used: System
 --
@@ -12,10 +12,13 @@ INSERT INTO plugins (id, crypto, arlo, wemo, hue) VALUES (1, 1, 0, 0, 0);
 
 -- Table: settings
 CREATE TABLE settings (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, arlousername VARCHAR, arlopassword, refresh INTEGER DEFAULT (60), powercost DECIMAL DEFAULT (0.14));
-INSERT INTO settings (id, arlousername, arlopassword, refresh, powercost) VALUES (1, '', NULL, 0, 0.14);
+INSERT INTO settings (id, arlousername, arlopassword, refresh, powercost) VALUES (1, '', NULL, 60, 0.14);
 
 -- Table: wallets
 CREATE TABLE wallets (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, type VARCHAR, number TEXT, balance DECIMAL NOT NULL DEFAULT (0));
+
+-- Table: wemos
+CREATE TABLE wemos (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, name VARCHAR NOT NULL, type VARCHAR);
 
 -- Table: workers
 CREATE TABLE workers (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, name VARCHAR, ip VARCHAR, pool VARCHAR, insight VARCHAR, software VARCHAR, softwareport INTEGER, amp DECIMAL, walletid INTEGER NOT NULL, sshuser VARCHAR, sshpassword VARCHAR, sshport INTEGER);

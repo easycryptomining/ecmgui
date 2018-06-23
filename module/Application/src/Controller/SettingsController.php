@@ -5,11 +5,12 @@ namespace Application\Controller;
 use Application\Service\PluginsServiceInterface;
 use Application\Form\PluginsForm;
 use Application\Service\WalletsServiceInterface;
-use Zend\Db\Sql\Where;
-use Zend\Json\Json;
 use Application\Service\SettingsServiceInterface;
 use Application\Form\SettingsForm;
 use Application\Service\WorkersServiceInterface;
+use Application\Service\WemosServiceInterface;
+use Zend\Db\Sql\Where;
+use Zend\Json\Json;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 
@@ -44,17 +45,23 @@ class SettingsController extends AbstractActionController {
      * @var WorkersServiceInterface
      */
     protected $workersService;
+    
+    /**
+     * @var WemosServiceInterface
+     */
+    protected $wemosService;
 
     /**
      * Construct
      */
-    public function __construct(PluginsServiceInterface $pluginsService, PluginsForm $pluginsForm, WalletsServiceInterface $walletsService, SettingsServiceInterface $settingsService, SettingsForm $settingsForm, WorkersServiceInterface $workersService) {
+    public function __construct(PluginsServiceInterface $pluginsService, PluginsForm $pluginsForm, WalletsServiceInterface $walletsService, SettingsServiceInterface $settingsService, SettingsForm $settingsForm, WorkersServiceInterface $workersService, WemosServiceInterface $wemosService) {
         $this->pluginsService = $pluginsService;
         $this->pluginsForm = $pluginsForm;
         $this->walletsService = $walletsService;
         $this->settingsService = $settingsService;
         $this->settingsForm = $settingsForm;
         $this->workersService = $workersService;
+        $this->wemosService = $wemosService;
     }
 
     public function indexAction() {
@@ -628,6 +635,228 @@ class SettingsController extends AbstractActionController {
             $response->setContent(Json::encode(['success' => "Worker deleted"]));
         } else {
             $response->setContent(Json::encode(['error' => ['Could not find the worker']]));
+        }
+
+        return $response;
+    }
+    
+    /**
+     * AJAX : call to get all workers
+     * 
+     * @return array
+     */
+    public function getAllWemosAction() {
+        $request = $this->getRequest();
+        $response = $this->getResponse();
+        $response->getHeaders()->addHeaderLine("Content-Type", "application/json");
+
+        // Checks if the request is valid
+        if (!$request->isPost() || !$request->isXmlHttpRequest()) {
+            $response->setContent(Json::encode(['error' => ['Very bad request']]));
+            return $response;
+        }
+
+        // Gets wemos data
+        $data = $this->formatWemosToDatatable();
+
+        $response->setContent(Json::encode($data));
+        return $response;
+    }
+
+    /**
+     * Prepares formatted data for datatable
+     * 
+     * @return array
+     */
+    protected function formatWemosToDatatable() {
+        $request = $this->getRequest();
+
+        // Gets values for datatable from the request
+        $draw = intval($request->getPost('draw'));
+        $limit = intval($request->getPost('length'));
+        $offset = intval($request->getPost('start'));
+
+        // Prepares Where clause
+        $search = strip_tags($request->getPost('search')['value']);
+        if (!empty($search)) {
+            // Where clause using closure
+            $where = function(Where $where) use($search) {
+                $where->like('name', "%$search%")
+                ->or->like('type', "%$search%");
+            };
+        } else {
+            $where = null;
+        }
+
+        // Prepare value for ORDER BY clause if provided
+        $order = $request->getPost('order');
+        if (!empty($order)) {
+            $columns = [
+                0 => 'id',
+                1 => 'name',
+                2 => 'type',
+            ];
+            $columnNumber = intval($request->getPost('order')['0']['column']);
+            // $column = strval($request->getPost('columns')[$columnNumber]['data']);
+            $column = $columns[$columnNumber];
+            $dir = strval($request->getPost('order')['0']['dir']);
+            $orderBy = "$column $dir";
+        } else {
+            $orderBy = "id asc";
+        }
+
+        // Gets filtered data
+        // Wemos entities
+        $wemosEntities = $this->wemosService->getWemosByFilter($where, $orderBy, $limit, $offset);
+        $wemosData = $wemosEntities->toArray();
+
+        // Prepares data for datatable
+        $tableContent = [];
+        foreach ($wemosData as $wemos) {
+            $prepareData = [];
+            $prepareData[] = $wemos['id'];
+            $prepareData[] = $wemos['name'];
+            $prepareData[] = $wemos['type'];
+            $prepareData[] = sprintf('<span class="glyphicon glyphicon-edit dt-action-button" id="editWemo" aria-hidden="true" data-wemoid="%d"></span>', $wemos['id']);
+            $prepareData[] = sprintf('<span class="glyphicon glyphicon-trash dt-action-button" aria-hidden="true" data-wemoid="%d" data-toggle="modal" data-target="#deleteWemoModal"></span>', $wemos['id']);
+            $tableContent[] = $prepareData;
+        }
+
+        // Makes appropriate total for pagination
+        if (null === $where) {
+            $allWemos = $this->wemosService->getWemosByFilter();
+            $recordsTotal = count($allWemos);
+            $recordsFiltered = $recordsTotal;
+        } elseif (null !== $where) {
+            $wemosEntities = $this->wemosService->getWemosByFilter($where);
+            $recordsTotal = count($wemosEntities->toArray());
+            $recordsFiltered = $recordsTotal;
+        }
+
+        // Prepares data available for datatable
+        $data = [
+            'draw' => $draw,
+            'recordsTotal' => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
+            'data' => $tableContent,
+        ];
+
+        return $data;
+    }
+    
+    /**
+     * AJAX : call to get one wemo info
+     * 
+     * @return array
+     */
+    public function getWemoAction() {
+        $request = $this->getRequest();
+        $response = $this->getResponse();
+        $response->getHeaders()->addHeaderLine("Content-Type", "application/json");
+
+        // Checks if the request is valid
+        if (!$request->isPost() || !$request->isXmlHttpRequest()) {
+            $response->setContent(Json::encode(['error' => ['Very bad request']]));
+            return $response;
+        }
+
+        $wemoId = intval($request->getPost('wemoId'));
+        $wemoDetails = $this->wemosService->getWemosById($wemoId);
+        if ($wemoDetails) {
+            $response->setContent(Json::encode(['wemo' => $wemoDetails]));
+        } else {
+            $response->setContent(Json::encode(['error' => ['Wemo not found']]));
+        }
+
+        return $response;
+    }
+
+    /**
+     * AJAX : call to add a wemo
+     * 
+     * @return array
+     */
+    public function addWemoAction() {
+        $request = $this->getRequest();
+        $response = $this->getResponse();
+        $response->getHeaders()->addHeaderLine("Content-Type", "application/json");
+
+        // Checks if the request is valid
+        if (!$request->isPost() || !$request->isXmlHttpRequest()) {
+            $response->setContent(Json::encode(['error' => ['Very bad request']]));
+            return $response;
+        }
+
+        $data = $request->getPost()->toArray();
+        $wemoId = (int) $data['wemoId'];
+        unset($data['wemoId']);
+
+        if ($wemoId = $this->wemosService->insertWemos($data)) {
+            $response->setContent(Json::encode(['success' => 'Wemo created', 'wemoId' => $wemoId]));
+        } else {
+            $response->setContent(Json::encode(['error' => ['Could not create wemo']]));
+        }
+
+        return $response;
+    }
+
+    /**
+     * AJAX : call to update a wemo
+     * 
+     * @return array
+     */
+    public function updWemoAction() {
+        $request = $this->getRequest();
+        $response = $this->getResponse();
+        $response->getHeaders()->addHeaderLine("Content-Type", "application/json");
+
+        // Checks if the request is valid
+        if (!$request->isPost() || !$request->isXmlHttpRequest()) {
+            $response->setContent(Json::encode(['error' => ['Very bad request']]));
+            return $response;
+        }
+        $rawWemoId = $request->getPost('wemoId');
+        $wemoId = (int) $rawWemoId;
+
+        if (!empty($wemoId) && is_int($wemoId)) {
+            // Gets the data and wemos ID
+            $data = $request->getPost()->toArray();
+            $wemoId = (int) $data['wemoId'];
+            unset($data['wemoId']);
+
+            if ($this->wemosService->updateWemos($data, ['id' => $wemoId])) {
+                $response->setContent(Json::encode(['success' => 'Wemo updated']));
+            } else {
+                $response->setContent(Json::encode(['error' => ['Change any data and try again']]));
+            }
+        } else {
+            $response->setContent(Json::encode(['error' => ['No wemo id provided']]));
+        }
+
+        return $response;
+    }
+
+    /**
+     * AJAX : call to delete a wemo
+     * 
+     * @return array
+     */
+    public function delWemoAction() {
+        $request = $this->getRequest();
+        $response = $this->getResponse();
+        $response->getHeaders()->addHeaderLine("Content-Type", "application/json");
+
+        // Checks if the request is valid
+        if (!$request->isPost() || !$request->isXmlHttpRequest()) {
+            $response->setContent(Json::encode(['error' => ['Very bad request']]));
+            return $response;
+        }
+
+        $wemoId = intval($request->getPost('wemoId'));
+        if ($this->wemosService->deleteWemos(['id' => $wemoId])) {
+            $response->setContent(Json::encode(['success' => "Wemo deleted"]));
+        } else {
+            $response->setContent(Json::encode(['error' => ['Could not find the wemo']]));
         }
 
         return $response;

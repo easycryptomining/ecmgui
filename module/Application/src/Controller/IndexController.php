@@ -7,6 +7,7 @@ use Application\Service\WalletsServiceInterface;
 use Application\Service\SettingsServiceInterface;
 use Application\Service\WorkersServiceInterface;
 use Zend\Mvc\Controller\AbstractActionController;
+use Application\Service\WemosServiceInterface;
 use Zend\View\Model\ViewModel;
 use Zend\Json\Json;
 use a15lam\PhpWemo;
@@ -34,13 +35,19 @@ class IndexController extends AbstractActionController {
     protected $workersService;
 
     /**
+     * @var WemosServiceInterface
+     */
+    protected $wemosService;
+
+    /**
      * Construct
      */
-    public function __construct(PluginsServiceInterface $pluginsService, WalletsServiceInterface $walletsService, SettingsServiceInterface $settingsService, WorkersServiceInterface $workersService) {
+    public function __construct(PluginsServiceInterface $pluginsService, WalletsServiceInterface $walletsService, SettingsServiceInterface $settingsService, WorkersServiceInterface $workersService, WemosServiceInterface $wemosService) {
         $this->pluginsService = $pluginsService;
         $this->walletsService = $walletsService;
         $this->settingsService = $settingsService;
         $this->workersService = $workersService;
+        $this->wemosService = $wemosService;
     }
 
     public function indexAction() {
@@ -99,7 +106,7 @@ class IndexController extends AbstractActionController {
                     $kwh = round(24 * 365 * ($power / 1000));
                     $yearCost = round($kwh * $powerCost);
                     $monthCost = round($yearCost / 12);
-                    
+
                     // Get power state
                     $powerState = $myDevice->state();
                 }
@@ -152,12 +159,32 @@ class IndexController extends AbstractActionController {
             ];
         }
 
+        $wemosEntities = $this->wemosService->getWemosByFilter();
+        foreach ($wemosEntities as $wemo) {
+            $device = \a15lam\PhpWemo\Discovery::lookupDevice('id', $wemo->name);
+            if (!empty($device)) {
+                $client = new \a15lam\PhpWemo\WemoClient($device['ip'], $device['port']);
+                $deviceClass = $device['class_name'];
+                $myDevice = new $deviceClass($device['id'], $client);
+                // Get power state
+                $state = $myDevice->state();
+            }
+            $wemosArray[] = [
+                'id' => $wemo->id,
+                'name' => $wemo->name,
+                'type' => $wemo->type,
+                'ping' => $wemo->ping(),
+                'state' => $state,
+            ];
+        }
+
         return new ViewModel([
             'title' => 'Dashboard',
             'plugins' => $pluginsEntities,
             'walletsArray' => $walletsArray,
             'settings' => $settingsEntities,
             'workersArray' => $workersArray,
+            'wemosArray' => $wemosArray,
         ]);
     }
 
@@ -353,7 +380,7 @@ class IndexController extends AbstractActionController {
         $response->setContent(Json::encode(['power' => $power]));
         return $response;
     }
-        
+
     /**
      * @return array
      */
@@ -371,10 +398,17 @@ class IndexController extends AbstractActionController {
 
         $id = $request->getPost('id');
         $state = $request->getPost('state');
-        $worker = $this->workersService->getWorkersById($id);
-        $insight = $worker->insight;
+        $entity = $request->getPost('entity');
 
-        $device = \a15lam\PhpWemo\Discovery::lookupDevice('id', $insight);
+        if ($entity == 'worker') {
+            $worker = $this->workersService->getWorkersById($id);
+            $wemoId = $worker->insight;
+        } elseif ($entity == 'wemo') {
+            $wemo = $this->wemosService->getWemosById($id);
+            $wemoId = $wemo->name;
+        }
+
+        $device = \a15lam\PhpWemo\Discovery::lookupDevice('id', $wemoId);
         if (!empty($device)) {
             $client = new \a15lam\PhpWemo\WemoClient($device['ip'], $device['port']);
             $deviceClass = $device['class_name'];

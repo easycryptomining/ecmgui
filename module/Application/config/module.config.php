@@ -81,6 +81,8 @@ return [
             Form\SettingsForm::class => Factory\Form\SettingsFormFactory::class,
             Service\WorkersService::class => Factory\Service\WorkersServiceFactory::class,
             Mapper\WorkersMapper::class => Factory\Mapper\WorkersMapperFactory::class,
+            Service\WemosService::class => Factory\Service\WemosServiceFactory::class,
+            Mapper\WemosMapper::class => Factory\Mapper\WemosMapperFactory::class,
         ],
         'aliases' => [
             'PluginsService' => Service\PluginsService::class,
@@ -93,6 +95,8 @@ return [
             'SettingsForm' => Form\SettingsForm::class,
             'WorkersService' => Service\WorkersService::class,
             'WorkersMapper' => Mapper\WorkersMapper::class,
+            'WemosService' => Service\WemosService::class,
+            'WemosMapper' => Mapper\WemosMapper::class,
         ],
         'shared' => [], 
     ],

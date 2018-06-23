@@ -21,6 +21,7 @@ $pending = '-';
 $insight = false;
 $sum_power_refresh = '';
 $sum_hash_refresh = '';
+$wemoAlive = false;
 
 $refreshRate = $settings->refresh * 1000;
 ?>
@@ -40,16 +41,34 @@ $refreshRate = $settings->refresh * 1000;
 </div>
 
 <?php if ($plugins->arlo !== '0') : ?>
-    <div id="arloPanel" class="panel panel-default">
+    <div id="arloPanel" class="panel panel-primary">
         <div id="arloPanelHeading" class="panel-heading"><strong>Arlo</strong></div>
         <div id="arloPanelBody" class="panel-body"></div>
     </div>
 <?php endif; ?>
 
 <?php if ($plugins->wemo !== '0') : ?>
-    <div id="wemoPanel" class="panel panel-default">
+    <div id="wemoPanel" class="panel panel-primary">
         <div id="wemoPanelHeading" class="panel-heading"><strong>Wemo</strong></div>
-        <div id="wemoPanelBody" class="panel-body"></div>
+        <div id="wemoPanelBody" class="panel-body">
+            <?php foreach ($wemosArray as $wemo) : ?>
+                <div class="row">
+                    <div class="col-xs-6">
+                        <?= $wemo['name'] ?>
+                    </div>
+                    <div class="col-xs-6">
+                        <?php if ($wemo['ping'] === true) : ?>
+                            <?php
+                            $wemoAlive = true;
+                            ?>
+                            <input <?= ($wemo['state'] == 1 || $wemo['state'] == 8 ? 'checked' : '') ?> id="<?= $wemo['id'] ?>" class="btn-toggle wemo-switch" data-name="<?= $wemo['name'] ?>" data-entity="wemo" data-toggle="toggle" data-size="mini" type="checkbox" autocomplete="off">
+                        <?php else : ?>
+                            <i class="fa fa-warning"></i> doesn't ping !
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
     </div>
 <?php endif; ?>
 
@@ -205,7 +224,7 @@ $refreshRate = $settings->refresh * 1000;
                                                 powerstate = 1 : On with something on it
                                                 powerstate = 8 : On with nothing on it
                                                 -->
-                                                <input <?= ($worker['powerstate'] == 1 || $worker['powerstate'] == 8 ? 'checked' : '') ?> id="<?= $worker['id'] ?>" class="btn-toggle wemo-insight" data-name="<?= $worker['name'] ?>" data-toggle="toggle" data-size="mini" type="checkbox" autocomplete="off">
+                                                <input <?= ($worker['powerstate'] == 1 || $worker['powerstate'] == 8 ? 'checked' : '') ?> id="<?= $worker['id'] ?>" class="btn-toggle wemo-insight" data-name="<?= $worker['name'] ?>" data-entity="worker" data-toggle="toggle" data-size="mini" type="checkbox" autocomplete="off">
                                             </div>
                                         <?php endif; ?>
                                     </div>
@@ -267,25 +286,13 @@ $refreshRate = $settings->refresh * 1000;
 <?php if ($insight === true) : ?>
             $('.wemo-insight').bootstrapToggle();
             $('.wemo-insight').change(function () {
-                var state = $(this).prop('checked');
-                var id = $(this).prop('id');
-                var name = $(this).data("name");
-                if (state === false) {
-                    if (!confirm('Power OFF ' + name + '?')) {
-                        $(this).bootstrapToggle('on');
-                        e.preventDefault();
-                    }
-                }
-                $.ajax({
-                    cache: false,
-                    url: '/application/toggle-power-state',
-                    type: 'POST',
-                    dataType: 'JSON',
-                    data: {
-                        'id': id,
-                        'state': state
-                    },
-                });
+                powerToggle($(this));
+            });
+<?php endif; ?>
+<?php if ($wemoAlive === true) : ?>
+            $('.wemo-switch').bootstrapToggle();
+            $('.wemo-switch').change(function () {
+                powerToggle($(this));
             });
 <?php endif; ?>
 <?php if ($settings->refresh > 0) : ?>

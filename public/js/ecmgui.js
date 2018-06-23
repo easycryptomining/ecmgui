@@ -81,3 +81,28 @@ function getSumPower(spanId) {
     $('#' + spanId + '').html(totalPower);
 }
 ;
+
+function powerToggle(input) {
+    var state = input.prop('checked');
+    var id = input.prop('id');
+    var name = input.data("name");
+    var entity = input.data("entity");
+    if (state === false) {
+        if (!confirm('Power OFF ' + name + '?')) {
+            $(this).bootstrapToggle('on');
+            e.preventDefault();
+        }
+    }
+    $.ajax({
+        cache: false,
+        url: '/application/toggle-power-state',
+        type: 'POST',
+        dataType: 'JSON',
+        data: {
+            'id': id,
+            'state': state,
+            'entity': entity
+        },
+    });
+}
+;

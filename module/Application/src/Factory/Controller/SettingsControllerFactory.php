@@ -15,7 +15,8 @@ class SettingsControllerFactory implements FactoryInterface {
         $settingsService = $container->get('SettingsService');
         $settingsForm = $container->get('SettingsForm');
         $workersService = $container->get('WorkersService');
-        $settingsController = new SettingsController($pluginsService, $pluginsForm, $walletsService, $settingsService, $settingsForm, $workersService);
+        $wemosService = $container->get('WemosService');
+        $settingsController = new SettingsController($pluginsService, $pluginsForm, $walletsService, $settingsService, $settingsForm, $workersService, $wemosService);
         return $settingsController;
     }
 

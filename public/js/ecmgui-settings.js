@@ -207,7 +207,7 @@ jQuery(function ($) {
         },
         "columnDefs": [
             {
-                "targets": [4, 5],
+                "targets": [12, 13],
                 "orderable": false,
             },
         ],
@@ -384,6 +384,195 @@ jQuery(function ($) {
 //                console.log(data.success);
                 $('#deleteWorkerModal').modal('hide');
                 workersDataTable.ajax.reload();
+            },
+            // https://stackoverflow.com/a/13698395
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 0) {
+                    alert('Not connect.\n Verify Network.');
+                } else if (xhr.status == 404) {
+                    alert('Requested page not found. [404]');
+                } else if (xhr.status == 500) {
+                    alert('Server Error [500].');
+                } else if (errorThrown === 'parsererror') {
+                    alert('Requested JSON parse failed.');
+                } else if (errorThrown === 'timeout') {
+                    alert('Time out error.');
+                } else if (errorThrown === 'abort') {
+                    alert('Ajax request aborted.');
+                } else {
+                    alert('There was some error. Try again.');
+                }
+            },
+        });
+    });
+    
+    // -------------------------------------------------------------------------
+    
+    // Populates wemos table with data
+    var wemosDataTable = $('#wemosTable').DataTable({
+        "processing": true,
+        "serverSide": true,
+        "order": [0, 'ASC'],
+        "ajax": {
+            type: "POST",
+            url: "/settings/get-all-wemos",
+            dataType: 'JSON',
+            error: function (error) {
+                console.log(error);
+            },
+        },
+        "columnDefs": [
+            {
+                "targets": [3, 4],
+                "orderable": false,
+            },
+        ],
+    });
+
+    // Clears form's data and changes text
+    $('#addWemo').on('click', function (e) {
+        e.preventDefault();
+        $('#addUpdWemoForm')[0].reset();
+        $('#statusWemosMsg').html("");
+        $('#titleWemoModal').text('Add new wemo');
+        $('#addUpdWemoBtn').val('Add');
+        $(document.body).append('<script>var wemoIdToEdit=null;</script>');
+    });
+
+    // Loads wemo data
+    $('#wemosTable').on('click', '#editWemo', function (e) {
+        e.preventDefault();
+
+        $('#statusWemosMsg').html("");
+        var fetchId = $(this).data('wemoid');
+        $(document.body).append('<script>var wemoIdToEdit=' + fetchId + ';</script>');
+        var wemoId = wemoIdToEdit;
+
+        $.ajax({
+            type: 'POST',
+            url: '/settings/get-wemo',
+            dataType: 'JSON',
+            cache: false,
+            data: {
+                'wemoId': wemoId,
+            },
+            success: function (data) {
+                $('#addUpdWemoModal #nameWemo').val(data.wemo.name);
+                $('#addUpdWemoModal #typeWemo').val(data.wemo.type);
+                $('#titleWemoModal').text('Update wemo');
+                $('#addUpdWemoBtn').val('Update');
+//                console.log("Loaded");
+            },
+            // https://stackoverflow.com/a/13698395
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 0) {
+                    alert('Not connect.\n Verify Network.');
+                } else if (xhr.status == 404) {
+                    alert('Requested page not found. [404]');
+                } else if (xhr.status == 500) {
+                    alert('Server Error [500].');
+                } else if (errorThrown === 'parsererror') {
+                    alert('Requested JSON parse failed.');
+                } else if (errorThrown === 'timeout') {
+                    alert('Time out error.');
+                } else if (errorThrown === 'abort') {
+                    alert('Ajax request aborted.');
+                } else {
+                    alert('There was some error. Try again.');
+                }
+            },
+        });
+
+        // Opens modal
+        $('#addUpdWemoModal').modal('show');
+    });
+
+    // Adds and updates wemo
+    $('#addUpdWemoForm').on('submit', function (e) {
+        e.preventDefault();
+
+        $('#statusWemosMsg').html('');
+
+        var nameWemo, typeWemo, wemoId, url;
+
+        nameWemo = $('#nameWemo').val();
+        typeWemo = $('#typeWemo').val();
+        wemoId = wemoIdToEdit;
+
+        if (wemoId == null) {
+            url = '/settings/add-wemo'
+        } else {
+            url = '/settings/upd-wemo'
+        }
+
+        $.ajax({
+            type: 'POST',
+            url: url,
+            dataType: 'JSON',
+            cache: false,
+            data: {
+                'name': nameWemo,
+                'type': typeWemo,
+                'wemoId': wemoId,
+            },
+            success: function (data) {
+                if (data.error) {
+                    for (i = 0; i < data.error.length; i++) {
+                        $('#statusWemosMsg').append('<div class="alert alert-danger alert-dismissible fade in" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>' + data.error[i] + '</div>');
+                    }
+                } else {
+                    $('#addUpdWemoForm')[0].reset();
+//                    console.log(data.success);
+                    $('#addUpdWemoModal').modal('hide');
+                    wemosDataTable.ajax.reload();
+                }
+            },
+            // https://stackoverflow.com/a/13698395
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 0) {
+                    alert('Not connect.\n Verify Network.');
+                } else if (xhr.status == 404) {
+                    alert('Requested page not found. [404]');
+                } else if (xhr.status == 500) {
+                    alert('Server Error [500].');
+                } else if (errorThrown === 'parsererror') {
+                    alert('Requested JSON parse failed.');
+                } else if (errorThrown === 'timeout') {
+                    alert('Time out error.');
+                } else if (errorThrown === 'abort') {
+                    alert('Ajax request aborted.');
+                } else {
+                    alert('There was some error. Try again.');
+                }
+            },
+        });
+    });
+
+    $('#deleteWemoModal').on('show.bs.modal', function (e) {
+        var button = $(e.relatedTarget);
+        var wemoId = button.data('wemoid');
+
+        $(document.body).append('<script>var wemoIdToDelete=' + wemoId + ';</script>');
+        $('#wemoIdSpan').text(wemoIdToDelete);
+    });
+
+    $('#deleteWemoBtn').on('click', function (e) {
+        e.preventDefault();
+
+        var wemoId = wemoIdToDelete;
+
+        $.ajax({
+            type: 'POST',
+            url: '/settings/del-wemo',
+            dataType: 'JSON',
+            cache: false,
+            data: {
+                'wemoId': wemoId,
+            },
+            success: function (data) {
+//                console.log(data.success);
+                $('#deleteWemoModal').modal('hide');
+                wemosDataTable.ajax.reload();
             },
             // https://stackoverflow.com/a/13698395
             error: function (xhr, textStatus, errorThrown) {

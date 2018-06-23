@@ -13,7 +13,8 @@ class IndexControllerFactory implements FactoryInterface {
         $walletsService = $container->get('WalletsService');
         $settingsService = $container->get('SettingsService');
         $workersService = $container->get('WorkersService');
-        $indexController = new IndexController($pluginsService, $walletsService, $settingsService, $workersService);
+        $wemosService = $container->get('WemosService');
+        $indexController = new IndexController($pluginsService, $walletsService, $settingsService, $workersService, $wemosService);
         return $indexController;
     }
 
