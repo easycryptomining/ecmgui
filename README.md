@@ -28,7 +28,7 @@ http://www.easycryptomining.com
 ### Arlo (V2 : Work in progress)
 * Turn On / Off
 
-### Wemo (V2 : Work in progress)
+### Wemo
 * Turn On / Off Switch (Mostly used for light, unmetered power plug)
 * Turn On / Off Insight + Power consumption of Monero rigs (Metered power plug)
 
