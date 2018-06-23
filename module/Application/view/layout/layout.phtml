@@ -1,0 +1,88 @@
+<?= $this->doctype() ?>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <?= $this->headTitle(\Application\Module::APP)->setSeparator(' - ')->setAutoEscape(false) ?>
+
+        <?=
+                $this->headMeta()
+                ->appendName('viewport', 'width=device-width, initial-scale=1.0')
+                ->appendHttpEquiv('X-UA-Compatible', 'IE=edge')
+        ?>
+
+        <?=
+                $this->headLink(['rel' => 'shortcut icon', 'type' => 'image/vnd.microsoft.icon', 'href' => $this->basePath() . '/img/favicon.ico'])
+                ->appendStylesheet($this->basePath('css/bootstrap.min.css'))
+                ->appendStylesheet($this->basePath('css/metisMenu.min.css'))
+                ->appendStylesheet($this->basePath('css/sb-admin-2.min.css'))
+//                ->appendStylesheet($this->basePath('css/morris.css'))
+                ->appendStylesheet($this->basePath('css/bootstrap-toggle.min.css'))
+                ->appendStylesheet($this->basePath('css/font-awesome.min.css'))
+                ->appendStylesheet($this->basePath('css/dataTables.bootstrap.min.css'))
+                ->appendStylesheet($this->basePath('css/ecmgui.css'))
+        ?>
+
+        <?=
+                $this->headScript()
+                ->appendFile($this->basePath('js/jquery-3.1.0.min.js'))
+                ->appendFile($this->basePath('js/bootstrap.min.js'))
+                ->appendFile($this->basePath('js/metisMenu.min.js'))
+                ->appendFile($this->basePath('js/raphael.min.js'))
+//                ->appendFile($this->basePath('js/morris.min.js'))
+//                ->appendFile($this->basePath('data/morris-data.js'))
+                ->appendFile($this->basePath('js/bootstrap-toggle.min.js'))
+                ->appendFile($this->basePath('js/jquery.dataTables.min.js'))
+                ->appendFile($this->basePath('js/dataTables.bootstrap.min.js'))
+                ->appendFile($this->basePath('js/sb-admin-2.js'))
+                ->appendFile($this->basePath('js/ecmgui.js'))
+        ?>
+    </head>
+    <body>
+        <?php
+// Initialize navbar items
+        $this->mainMenu()->setItems([
+            [
+                'id' => 'home',
+                'label' => 'Dashboard',
+                'link' => $this->url('home'),
+                'icon' => '<i class="fa fa-dashboard fa-fw"></i>'
+            ],
+            [
+                'id' => 'settings',
+                'label' => 'Settings',
+                'link' => $this->url("settings"),
+                'icon' => '<i class="fa fa-wrench"></i>'
+            ],
+        ]);
+
+// Check if the activeMenuItemId passed to layout view model
+// and if so, use it for setting active navbar item.
+        if (isset($activeMenuItemId)) {
+            $this->mainMenu()->setActiveItemId($activeMenuItemId);
+        }
+
+// Render the navbar
+        echo $this->mainMenu()->render();
+        ?>
+        <div id="page-wrapper">
+            <div class="row">
+                <div class="col-lg-12">
+                    <?= $this->content ?>
+                </div>
+            </div>
+            <hr>
+            <footer>
+                <div class="row">
+                    <div class="col-md-6">
+                        <a href="https://www.easycryptomining.com/" target="_blank">https://www.easycryptomining.com/</a>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <span class="small">v<?= \Application\Module::VERSION ?></span>
+                    </div>
+                </div>
+            </footer>
+        </div>
+        <?= $this->inlineScript() ?>
+    </body>
+</html>

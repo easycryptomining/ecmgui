@@ -1,0 +1,314 @@
+<?php
+$title = $this->title;
+$this->headTitle($title);
+
+function get_coinmarketcap($currency, $convert) {
+    $content = file_get_contents("https://api.coinmarketcap.com/v1/ticker/$currency/?convert=$convert");
+    return json_decode($content);
+}
+
+$currencySymbols = [
+    'monero' => 'xmr',
+    'ethereum' => 'eth',
+    'zcash' => 'zec'
+];
+
+$power_refresh = '';
+$hash_refresh = '';
+$uptime_refresh = '';
+$temp_refresh = '';
+$pending = '-';
+$insight = false;
+$sum_power_refresh = '';
+$sum_hash_refresh = '';
+
+$refreshRate = $settings->refresh * 1000;
+?>
+
+<div class="row">
+    <div class="col-xs-6">
+        <h2 class="page-header"><?= $title ?></h2>
+    </div>
+    <div class="col-xs-6 text-right vcenter">
+        <?php if ($settings->refresh > 0) : ?>
+            Auto refresh in <span id="countdown"><?php $settings->refresh ?></span>
+        <?php else : ?>
+            Auto refresh OFF
+        <?php endif; ?>
+    </div>
+
+</div>
+
+<?php if ($plugins->arlo !== '0') : ?>
+    <div id="arloPanel" class="panel panel-default">
+        <div id="arloPanelHeading" class="panel-heading"><strong>Arlo</strong></div>
+        <div id="arloPanelBody" class="panel-body"></div>
+    </div>
+<?php endif; ?>
+
+<?php if ($plugins->wemo !== '0') : ?>
+    <div id="wemoPanel" class="panel panel-default">
+        <div id="wemoPanelHeading" class="panel-heading"><strong>Wemo</strong></div>
+        <div id="wemoPanelBody" class="panel-body"></div>
+    </div>
+<?php endif; ?>
+
+<?php if ($plugins->hue !== '0') : ?>
+    <div id="huePanel" class="panel panel-default">
+        <div id="huePanelHeading" class="panel-heading"><strong>Hue</strong></div>
+        <div id="huePanelBody" class="panel-body"></div>
+    </div>
+<?php endif; ?>
+
+<?php if ($plugins->crypto !== '0') : ?>
+    <?php foreach ($walletsArray as $wallet) : ?>
+        <div id="crypto<?= $wallet['id'] ?>Panel" class="panel panel-primary">
+            <div id="crypto<?= $wallet['id'] ?>PanelHeading" class="panel-heading">
+                <strong><?= $wallet['type'] ?></strong>
+                <div class="pull-right hidden-xs">
+                    <?= $wallet['number'] ?>
+                </div>
+            </div>
+            <div id="crypto<?= $wallet['id'] ?>PanelBody" class="panel-body">
+                <div class="col-sm-6 col-md-6 col-lg-6">
+                    <?php
+                    $coinmarketcap = get_coinmarketcap($wallet['type'], 'EUR');
+                    ?>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-euro fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    Currency price : <a href="https://coinmarketcap.com/currencies/<?= $wallet['type'] ?>/" target="_blank"><?= round($coinmarketcap[0]->price_eur, 2) . ' €' ?></a><br />
+                                    Wallet : <?= $wallet['balance'] . ' ' . strtoupper($currencySymbols[$wallet['type']]) ?><br />
+                                    Wallet value : <?= round($wallet['balance'] * $coinmarketcap[0]->price_eur, 2) . ' €' ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-6 col-lg-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-bar-chart-o fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <?php if (!empty($wallet['pool'])) : ?>
+                                        Pending on <a href="<?= $wallet['poolurl'] ?>" target="_blank"><?= $wallet['pool'] ?></a>: <?= $wallet['pending'] ?>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php foreach ($workersArray as $worker) : ?>
+                    <?php if ($worker['walletid'] == $wallet['id']) : ?>
+                        <div class="col-sm-3 col-md-3 col-lg-3">
+                            <?php
+                            $panelColor = 'red';
+                            if ($worker['ping'] === true) {
+                                if ($worker['pool'] === false) {
+                                    $panelColor = 'yellow';
+                                } else {
+                                    $panelColor = 'green';
+                                }
+                                if ($worker['name'] != $worker['id']) {
+                                    $link = 'http://' . $worker['name'] . ':' . $worker['softwareport'];
+                                    $hash_refresh .= 'getHash("' . $link . '", "' . $worker['name'] . '-hash");';
+                                }
+                                if ($worker['ssh'] === true) {
+                                    $uptime_refresh .= 'getUptime("' . $worker['id'] . '", "' . $worker['name'] . '-uptime");';
+                                    $temp_refresh .= 'getTemp("' . $worker['id'] . '", "' . $worker['name'] . '-temp");';
+                                }
+                            }
+                            if ($worker['insight'] === true) {
+                                $insight = true;
+                                $power_refresh .= 'getPower("' . $worker['id'] . '", "' . $worker['name'] . '-power");';
+                            }
+                            ?>
+                            <div class="panel panel-<?= $panelColor ?>">
+                                <div class="panel-heading">
+                                    <div class="row">
+                                        <div class="col-xs-3">
+                                            <span class="text-uppercase blink-on-change"><strong><?= $worker['name'] ?></strong></span>
+                                        </div>
+                                        <div class="col-xs-9 text-right">
+                                            <?php if ($worker['ping'] === true) : ?>
+                                                <span class="blink-on-change" id="<?= $worker['name'] ?>-hash">-</span> H/s
+                                            <?php else : ?>
+                                                <span class="text-uppercase">down</span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="panel-body">
+                                    <?php if ($worker['ping'] === true) : ?>
+                                        <?php if ($worker['ssh'] === true) : ?>
+                                            <div class="row">
+                                                <div class="col-xs-3">
+                                                    Uptime
+                                                </div>
+                                                <div class="col-xs-9 text-right">
+                                                    <span class="blink-on-change" id="<?= $worker['name'] ?>-uptime">-</span>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-xs-3">
+                                                    Temperature
+                                                </div>
+                                                <div class="col-xs-9 text-right">
+                                                    <span class="blink-on-change" id="<?= $worker['name'] ?>-temp">-</span>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                    <?php if ($worker['insight'] === true) : ?>
+                                        <div class="row">
+                                            <div class="col-xs-3">
+                                                Power
+                                            </div>
+                                            <div class="col-xs-9 text-right">
+                                                <span class="blink-on-change" id="<?= $worker['name'] ?>-power">-</span> W <br />
+                                                <?php if ($worker['ping'] === true) : ?>
+                                                    <?= $worker['kwh'] ?> kWh / year <br />
+                                                    <?= $worker['amp'] ?> A
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                        <?php if ($worker['ping'] === true) : ?>
+                                            <div class="row">
+                                                <div class="col-xs-3">
+                                                    Cost
+                                                </div>
+                                                <div class="col-xs-9 text-right">
+                                                    <?= $worker['monthcost'] ?> € / month <br />
+                                                    <?= $worker['yearcost'] ?> € / year
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="panel-footer">
+                                    <div class="row">
+                                        <div class="col-xs-6">
+                                            <?php if ($worker['ping'] === true) : ?>
+                                                <a href="<?= $link ?>" target="_blank">View worker</a>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php if ($worker['insight'] === true) : ?>
+                                            <div class="col-xs-6 text-right">
+                                                <!--
+                                                powerstate = 1 : On with something on it
+                                                powerstate = 8 : On with nothing on it
+                                                -->
+                                                <input <?= ($worker['powerstate'] == 1 || $worker['powerstate'] == 8 ? 'checked' : '') ?> id="<?= $worker['id'] ?>" class="btn-toggle wemo-insight" data-name="<?= $worker['name'] ?>" data-toggle="toggle" data-size="mini" type="checkbox" autocomplete="off">
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+                <?php if (array_search($wallet['id'], array_column($workersArray, 'walletid')) === false) : ?>
+                    <div class="row">
+                        <div class="col-xs-12">
+                            No worker on this wallet
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
+            <?php if (array_search($wallet['id'], array_column($workersArray, 'walletid')) !== false) : ?>
+                <?php
+                $sum_hash_refresh .= 'getSumHash("' . $wallet['id'] . '-totalhash");';
+                $sum_power_refresh .= 'getSumPower("' . $wallet['id'] . '-totalpower");';
+                ?>
+                <div class="panel-footer">
+                    <div class="row">
+                        <div class="col-xs-6">
+                            Total hashrate : <span id="<?= $wallet['id'] ?>-totalhash"></span> H/s
+                        </div>
+                        <?php if ($insight === true) : ?>
+                            <div class="col-xs-6">
+                                Total power : <span id="<?= $wallet['id'] ?>-totalpower"></span> W
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+    <?php endforeach; ?>
+<?php endif; ?>
+
+<script>
+    $(document).ready(function () {
+<?= ($hash_refresh != '' ? $hash_refresh : "") ?>
+<?= ($uptime_refresh != '' ? $uptime_refresh : "") ?>
+<?= ($temp_refresh != '' ? $temp_refresh : "") ?>
+<?= ($power_refresh != '' ? $power_refresh : "") ?>
+        $(document).ajaxComplete(function () {
+<?= ($sum_power_refresh != '' ? $sum_power_refresh : "") ?>
+<?= ($sum_hash_refresh != '' ? $sum_hash_refresh : "") ?>
+        });
+<?php if ($settings->refresh > 0) : ?>
+            var refreshRate = <?= $settings->refresh ?>;
+            var timeInterval = setInterval(function () {
+                $('#countdown').html(refreshRate);
+                refreshRate--;
+                if (refreshRate <= 0) {
+                    clearInterval(timeInterval);
+                }
+            }, 1000);
+<?php endif; ?>
+<?php if ($insight === true) : ?>
+            $('.wemo-insight').bootstrapToggle();
+            $('.wemo-insight').change(function () {
+                var state = $(this).prop('checked');
+                var id = $(this).prop('id');
+                var name = $(this).data("name");
+                if (state === false) {
+                    if (!confirm('Power OFF ' + name + '?')) {
+                        $(this).bootstrapToggle('on');
+                        e.preventDefault();
+                    }
+                }
+                $.ajax({
+                    cache: false,
+                    url: '/application/toggle-power-state',
+                    type: 'POST',
+                    dataType: 'JSON',
+                    data: {
+                        'id': id,
+                        'state': state
+                    },
+                });
+            });
+<?php endif; ?>
+<?php if ($settings->refresh > 0) : ?>
+            var refreshInterval = setInterval(function () {
+    <?= ($hash_refresh != '' ? $hash_refresh : "") ?>
+    <?= ($uptime_refresh != '' ? $uptime_refresh : "") ?>
+    <?= ($temp_refresh != '' ? $temp_refresh : "") ?>
+    <?= ($power_refresh != '' ? $power_refresh : "") ?>
+                $(document).ajaxComplete(function () {
+    <?= ($sum_power_refresh != '' ? $sum_power_refresh : "") ?>
+    <?= ($sum_hash_refresh != '' ? $sum_hash_refresh : "") ?>
+                });
+
+                var refreshRate = <?= $settings->refresh ?>;
+                var timeInterval = setInterval(function () {
+                    $('#countdown').html(refreshRate);
+                    refreshRate--;
+                    if (refreshRate <= 0) {
+                        clearInterval(timeInterval);
+                    }
+                }, 1000);
+
+            }, <?= $refreshRate ?>);
+<?php endif; ?>
+    });
+</script>

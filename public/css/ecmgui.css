@@ -1,0 +1,32 @@
+body {
+    padding-top: 0px;
+    padding-bottom: 0px;
+}
+
+.form-group {
+    margin-bottom: 0px;
+}
+
+/* edit/delete button in datatable */
+.dt-action-button {
+    cursor: pointer;
+    vertical-align: central;
+}
+.glyphicon-trash {
+    color: #d80000;
+}
+
+/* Datatables */
+.dataTables_length, .dataTables_info {
+    text-align: left
+}
+
+.page-header {
+    margin: 14px 0 20px;
+}
+
+.vcenter {
+    display: inline-block;
+    vertical-align: middle;
+    float: none;
+}
