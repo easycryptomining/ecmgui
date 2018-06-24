@@ -153,5 +153,15 @@ interface WorkersInterface {
      * @return bool
      */
     public function ping();
+    
+    /**
+     * @return string
+     */
+    public function temp();
+    
+    /**
+     * @return string
+     */
+    public function uptime();
 
 }

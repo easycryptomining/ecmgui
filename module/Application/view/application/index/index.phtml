@@ -43,7 +43,9 @@ $refreshRate = $settings->refresh * 1000;
 <?php if ($plugins->arlo !== '0') : ?>
     <div id="arloPanel" class="panel panel-primary">
         <div id="arloPanelHeading" class="panel-heading"><strong>Arlo</strong></div>
-        <div id="arloPanelBody" class="panel-body"></div>
+        <div id="arloPanelBody" class="panel-body">
+            
+        </div>
     </div>
 <?php endif; ?>
 
@@ -73,7 +75,7 @@ $refreshRate = $settings->refresh * 1000;
 <?php endif; ?>
 
 <?php if ($plugins->hue !== '0') : ?>
-    <div id="huePanel" class="panel panel-default">
+    <div id="huePanel" class="panel panel-primary">
         <div id="huePanelHeading" class="panel-heading"><strong>Hue</strong></div>
         <div id="huePanelBody" class="panel-body"></div>
     </div>
@@ -144,9 +146,9 @@ $refreshRate = $settings->refresh * 1000;
                                     $temp_refresh .= 'getTemp("' . $worker['id'] . '", "' . $worker['name'] . '-temp");';
                                 }
                             }
-                            if ($worker['insight'] === true) {
+                            if (!empty($worker['insight'])) {
                                 $insight = true;
-                                $power_refresh .= 'getPower("' . $worker['id'] . '", "' . $worker['name'] . '-power");';
+                                $power_refresh .= 'getPower("' . $worker['insight'] . '", "' . $worker['name'] . '-power");';
                             }
                             ?>
                             <div class="panel panel-<?= $panelColor ?>">
@@ -185,7 +187,7 @@ $refreshRate = $settings->refresh * 1000;
                                             </div>
                                         <?php endif; ?>
                                     <?php endif; ?>
-                                    <?php if ($worker['insight'] === true) : ?>
+                                    <?php if (!empty($worker['insight'])) : ?>
                                         <div class="row">
                                             <div class="col-xs-3">
                                                 Power
@@ -218,13 +220,13 @@ $refreshRate = $settings->refresh * 1000;
                                                 <a href="<?= $link ?>" target="_blank">View worker</a>
                                             <?php endif; ?>
                                         </div>
-                                        <?php if ($worker['insight'] === true) : ?>
+                                        <?php if (!empty($worker['insight'])) : ?>
                                             <div class="col-xs-6 text-right">
                                                 <!--
                                                 powerstate = 1 : On with something on it
                                                 powerstate = 8 : On with nothing on it
                                                 -->
-                                                <input <?= ($worker['powerstate'] == 1 || $worker['powerstate'] == 8 ? 'checked' : '') ?> id="<?= $worker['id'] ?>" class="btn-toggle wemo-insight" data-name="<?= $worker['name'] ?>" data-entity="worker" data-toggle="toggle" data-size="mini" type="checkbox" autocomplete="off">
+                                                <input <?= ($worker['powerstate'] == 1 || $worker['powerstate'] == 8 ? 'checked' : '') ?> id="<?= $worker['insight'] ?>" class="btn-toggle wemo-insight" data-name="<?= $worker['name'] ?>" data-entity="worker" data-toggle="toggle" data-size="mini" type="checkbox" autocomplete="off">
                                             </div>
                                         <?php endif; ?>
                                     </div>

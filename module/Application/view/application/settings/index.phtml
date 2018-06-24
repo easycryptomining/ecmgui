@@ -150,7 +150,7 @@ $walletsData = $this->walletsData;
             <th>Name</th>
             <th>Ip</th>
             <th>Pool</th>
-            <th>Insight</th>
+            <th>Wemo</th>
             <th>Software</th>
             <th>Software port</th>
             <th>Amp</th>
@@ -201,6 +201,7 @@ $walletsData = $this->walletsData;
                     <div class="form-group">
                         <label for="type">Type</label>
                         <select class="form-control" id="type">
+                            <option value="null">---</option>
                             <option value="monero">Monero</option>
                             <option value="ethereum">Ethereum</option>
                             <option value="zcash">Zcash</option>
@@ -273,13 +274,21 @@ $walletsData = $this->walletsData;
                     </div>
 
                     <div class="form-group">
-                        <label for="insight">Insight ID</label>
-                        <input type="text" id="insight" placeholder="" class="form-control">
+                        <label for="insight">Wemo</label>
+                        <option value="null">---</option>
+                        <select class="form-control" id="insight">
+                            <?php
+                            foreach ($wemosData as $wemo) {
+                                echo '<option value="' . $wemo['id'] . '">' . $wemo['name'] . '</option>';
+                            }
+                            ?>
+                        </select>
                     </div>
 
                     <div class="form-group">
                         <label for="software">Software</label>
                         <select class="form-control" id="software">
+                            <option value="null">---</option>
                             <option value="xmr-stak">Xmr-stak</option>
                         </select>
                     </div>
@@ -296,6 +305,7 @@ $walletsData = $this->walletsData;
 
                     <div class="form-group">
                         <label for="walletid">Wallet ID</label>
+                        <option value="null">---</option>
                         <select class="form-control" id="walletid">
                             <?php
                             foreach ($walletsData as $wallet) {

@@ -97,12 +97,17 @@ class SettingsController extends AbstractActionController {
         // Wallets entities
         $walletsEntities = $this->walletsService->getWalletsByFilter();
         $walletsData = $walletsEntities->toArray();
+        
+        // Wemos entities
+        $wemosEntities = $this->wemosService->getWemosByFilter();
+        $wemosData = $wemosEntities->toArray();
 
         return new ViewModel([
             'title' => 'Settings',
             'pluginsForm' => $pluginsFormEntities,
             'settingsForm' => $settingsFormEntities,
             'walletsData' => $walletsData,
+            'wemosData' => $wemosData,
         ]);
     }
 

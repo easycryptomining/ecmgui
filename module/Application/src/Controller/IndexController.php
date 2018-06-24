@@ -57,12 +57,13 @@ class IndexController extends AbstractActionController {
             'ethereum' => 'eth',
             'zcash' => 'zec'
         ];
-        $pluginsEntities = $this->pluginsService->getPluginsById($id);
-        $settingsEntities = $this->settingsService->getSettingsById($id);
-        $powerCost = $settingsEntities->powercost;
+        $plugins = $this->pluginsService->getPluginsById($id);
+        $settings = $this->settingsService->getSettingsById($id);
+        $powerCost = $settings->powercost;
 
-        $walletsEntities = $this->walletsService->getWalletsByFilter();
-        foreach ($walletsEntities as $wallet) {
+        // Wallets
+        $wallets = $this->walletsService->getWalletsByFilter();
+        foreach ($wallets as $wallet) {
             $walletsArray[] = [
                 'id' => $wallet->id,
                 'type' => $wallet->type,
@@ -74,12 +75,12 @@ class IndexController extends AbstractActionController {
             ];
         }
 
-        $workersEntities = $this->workersService->getWorkersByFilter();
-        foreach ($workersEntities as $worker) {
+        // Workers
+        $workers = $this->workersService->getWorkersByFilter();
+        foreach ($workers as $worker) {
             $kwh = '';
             $yearCost = '';
             $monthCost = '';
-            $insight = false;
             $pool = true;
 
             $workerName = '';
@@ -93,23 +94,16 @@ class IndexController extends AbstractActionController {
 
             // Insight
             if (!empty($worker->insight)) {
-                $insight = true;
-                $device = \a15lam\PhpWemo\Discovery::lookupDevice('id', $worker->insight);
-                if (!empty($device)) {
-                    $client = new \a15lam\PhpWemo\WemoClient($device['ip'], $device['port']);
-                    $deviceClass = $device['class_name'];
-                    $myDevice = new $deviceClass($device['id'], $client);
-                    // Get power consomption
-                    $params = $myDevice->getParams();
-                    $parts = explode('|', $params);
-                    $power = round($parts[7] / 1000);
-                    $kwh = round(24 * 365 * ($power / 1000));
-                    $yearCost = round($kwh * $powerCost);
-                    $monthCost = round($yearCost / 12);
+                $wemo = $this->wemosService->getWemosById($worker->insight);
 
-                    // Get power state
-                    $powerState = $myDevice->state();
-                }
+                // Get power consomption
+                $power = $wemo->power();
+                $kwh = round(24 * 365 * ($power / 1000));
+                $yearCost = round($kwh * $powerCost);
+                $monthCost = round($yearCost / 12);
+
+                // Get power state
+                $powerState = $wemo->state();
             }
             $ssh = false;
             if (!empty($worker->sshuser) && !empty($worker->sshpassword) && !empty($worker->sshport)) {
@@ -141,11 +135,14 @@ class IndexController extends AbstractActionController {
                 }
             }
 
+            // Arlo
+
+
             $workersArray[] = [
                 'id' => $worker->id,
                 'name' => $workerName,
                 'pool' => $pool,
-                'insight' => $insight,
+                'insight' => $worker->insight,
                 'software' => $worker->software,
                 'softwareport' => $worker->softwareport,
                 'amp' => $worker->amp,
@@ -159,30 +156,23 @@ class IndexController extends AbstractActionController {
             ];
         }
 
-        $wemosEntities = $this->wemosService->getWemosByFilter();
-        foreach ($wemosEntities as $wemo) {
-            $device = \a15lam\PhpWemo\Discovery::lookupDevice('id', $wemo->name);
-            if (!empty($device)) {
-                $client = new \a15lam\PhpWemo\WemoClient($device['ip'], $device['port']);
-                $deviceClass = $device['class_name'];
-                $myDevice = new $deviceClass($device['id'], $client);
-                // Get power state
-                $state = $myDevice->state();
-            }
+        // Wemo
+        $wemos = $this->wemosService->getWemosByFilter();
+        foreach ($wemos as $wemo) {
             $wemosArray[] = [
                 'id' => $wemo->id,
                 'name' => $wemo->name,
                 'type' => $wemo->type,
                 'ping' => $wemo->ping(),
-                'state' => $state,
+                'state' => $wemo->state(),
             ];
         }
 
         return new ViewModel([
             'title' => 'Dashboard',
-            'plugins' => $pluginsEntities,
+            'plugins' => $plugins,
             'walletsArray' => $walletsArray,
-            'settings' => $settingsEntities,
+            'settings' => $settings,
             'workersArray' => $workersArray,
             'wemosArray' => $wemosArray,
         ]);
@@ -231,44 +221,8 @@ class IndexController extends AbstractActionController {
 
         $id = $request->getPost('id');
         $worker = $this->workersService->getWorkersById($id);
-        $workerName = '';
-        if (!empty($worker->name)) {
-            $workerName = $worker->name;
-        } elseif (!empty($worker->ip)) {
-            $workerName = $worker->ip;
-        } else {
-            $response->setContent(Json::encode(['error' => ['Worker must have a name or an ip']]));
-            return $response;
-        }
 
-        $uptime = '-';
-        $connection = ssh2_connect($workerName, $worker->sshport);
-        if (ssh2_auth_password($connection, $worker->sshuser, $worker->sshpassword)) {
-            $stream = ssh2_exec($connection, "uptime -p");
-            stream_set_blocking($stream, true);
-            $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
-            $uptime = stream_get_contents($stream_out);
-            $uptime = str_replace('up ', '', $uptime);
-            $uptime = str_replace('years', 'Y', $uptime);
-            $uptime = str_replace('year', 'Y', $uptime);
-            $uptime = str_replace('mounths', 'M', $uptime);
-            $uptime = str_replace('mounth', 'M', $uptime);
-            $uptime = str_replace('weeks', 'W', $uptime);
-            $uptime = str_replace('week', 'W', $uptime);
-            $uptime = str_replace('days', 'd', $uptime);
-            $uptime = str_replace('day', 'd', $uptime);
-            $uptime = str_replace('hours', 'h', $uptime);
-            $uptime = str_replace('hour', 'h', $uptime);
-            $uptime = str_replace('minutes', 'm', $uptime);
-            $uptime = str_replace('minute', 'm', $uptime);
-            $uptime = str_replace('seconds', 's', $uptime);
-            $uptime = str_replace('second', 's', $uptime);
-            $uptime = str_replace(' ', '', $uptime);
-            $uptime = str_replace(',', ' ', $uptime);
-            $uptime = str_replace(PHP_EOL, '', $uptime);
-        }
-
-        $response->setContent(Json::encode(['uptime' => $uptime]));
+        $response->setContent(Json::encode(['uptime' => $worker->uptime()]));
         return $response;
     }
 
@@ -289,61 +243,8 @@ class IndexController extends AbstractActionController {
 
         $id = $request->getPost('id');
         $worker = $this->workersService->getWorkersById($id);
-        $workerName = '';
-        if (!empty($worker->name)) {
-            $workerName = $worker->name;
-        } elseif (!empty($worker->ip)) {
-            $workerName = $worker->ip;
-        } else {
-            $response->setContent(Json::encode(['error' => ['Worker must have a name or an ip']]));
-            return $response;
-        }
 
-        $temp = '-';
-        $connection = ssh2_connect($workerName, $worker->sshport);
-        if (ssh2_auth_password($connection, $worker->sshuser, $worker->sshpassword)) {
-            $stream = ssh2_exec($connection, "sensors");
-            stream_set_blocking($stream, true);
-            $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
-            $sensors = stream_get_contents($stream_out);
-
-            if (trim($sensors) !== "") {
-                $sensors = str_replace(":\n", ":", $sensors);
-                $sensors = str_replace("\n\n", "\n", $sensors);
-                $lines = preg_split("/\n/", $sensors, -1, PREG_SPLIT_NO_EMPTY);
-            }
-            $matcheKey = array_keys(preg_grep('/^coretemp/i', $lines));
-            $strinToParse = $lines[$matcheKey[0] + 2];
-            $data = explode(" ", $strinToParse);
-            $coreTemp = str_replace('+', '', $data[4]);
-            $temp = "Cpu: $coreTemp °C";
-
-            $matcheKey = array_keys(preg_grep('/^amdgpu/i', $lines));
-            if (!empty($matcheKey)) {
-                $i = 1;
-                foreach ($matcheKey as $key) {
-                    $strinToParse = $lines[$key + 3];
-                    $data = explode(" ", $strinToParse);
-                    $gpuTemp = str_replace('+', '', $data[8]);
-                    $temp .= "<br />Gpu$i: $gpuTemp °C";
-                    $i++;
-                }
-            } else {
-                $stream = ssh2_exec($connection, "nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader");
-                stream_set_blocking($stream, true);
-                $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
-                $sensors = trim(stream_get_contents($stream_out));
-                $data = explode(PHP_EOL, $sensors);
-
-                $i = 1;
-                foreach ($data as $value) {
-                    $temp .= "<br />Gpu$i: $value °C";
-                    $i++;
-                }
-            }
-        }
-
-        $response->setContent(Json::encode(['temp' => $temp]));
+        $response->setContent(Json::encode(['temp' => $worker->temp()]));
         return $response;
     }
 
@@ -363,21 +264,9 @@ class IndexController extends AbstractActionController {
         }
 
         $id = $request->getPost('id');
-        $worker = $this->workersService->getWorkersById($id);
-        $insight = $worker->insight;
+        $wemo = $this->wemosService->getWemosById($id);
 
-        $power = '-';
-        $device = \a15lam\PhpWemo\Discovery::lookupDevice('id', $insight);
-        if (!empty($device)) {
-            $client = new \a15lam\PhpWemo\WemoClient($device['ip'], $device['port']);
-            $deviceClass = $device['class_name'];
-            $myDevice = new $deviceClass($device['id'], $client);
-            $params = $myDevice->getParams();
-            $parts = explode('|', $params);
-            $power = round($parts[7] / 1000);
-        }
-
-        $response->setContent(Json::encode(['power' => $power]));
+        $response->setContent(Json::encode(['power' => $wemo->power()]));
         return $response;
     }
 
@@ -397,32 +286,9 @@ class IndexController extends AbstractActionController {
         }
 
         $id = $request->getPost('id');
-        $state = $request->getPost('state');
-        $entity = $request->getPost('entity');
+        $wemo = $this->wemosService->getWemosById($id);
 
-        if ($entity == 'worker') {
-            $worker = $this->workersService->getWorkersById($id);
-            $wemoId = $worker->insight;
-        } elseif ($entity == 'wemo') {
-            $wemo = $this->wemosService->getWemosById($id);
-            $wemoId = $wemo->name;
-        }
-
-        $device = \a15lam\PhpWemo\Discovery::lookupDevice('id', $wemoId);
-        if (!empty($device)) {
-            $client = new \a15lam\PhpWemo\WemoClient($device['ip'], $device['port']);
-            $deviceClass = $device['class_name'];
-            $myDevice = new $deviceClass($device['id'], $client);
-            // Don't use real true/false or it fail
-            if ($state == 'true') {
-                $myDevice->On();
-            } else {
-                $myDevice->Off();
-            }
-            $state = $myDevice->state();
-        }
-
-        $response->setContent(Json::encode(['state' => $state]));
+        $response->setContent(Json::encode(['state' => $wemo->toggle()]));
         return $response;
     }
 

@@ -72,7 +72,7 @@ class Wemos implements WemosInterface {
 
         return $this;
     }
-    
+
     /**
      * @return bool
      */
@@ -85,6 +85,60 @@ class Wemos implements WemosInterface {
             }
         }
         return $result;
+    }
+
+    /**
+     * @return array
+     */
+    public function power() {
+        $power = 0;
+        $device = \a15lam\PhpWemo\Discovery::lookupDevice('id', $this->name);
+        if (!empty($device)) {
+            $client = new \a15lam\PhpWemo\WemoClient($device['ip'], $device['port']);
+            $deviceClass = $device['class_name'];
+            $myDevice = new $deviceClass($device['id'], $client);
+            // Get power consomption
+            $params = $myDevice->getParams();
+            $parts = explode('|', $params);
+            $power = round($parts[7] / 1000);
+        }
+        return $power;
+    }
+    
+    /**
+     * @return integer
+     */
+    public function state() {
+        $state = 0;
+        $device = \a15lam\PhpWemo\Discovery::lookupDevice('id', $this->name);
+        if (!empty($device)) {
+            $client = new \a15lam\PhpWemo\WemoClient($device['ip'], $device['port']);
+            $deviceClass = $device['class_name'];
+            $myDevice = new $deviceClass($device['id'], $client);
+            $state = $myDevice->state();
+        }
+        return $state;
+    }
+    
+    /**
+     * @return integer
+     */
+    public function toggle() {
+        $state = 0;
+        $device = \a15lam\PhpWemo\Discovery::lookupDevice('id', $this->name);
+        if (!empty($device)) {
+            $client = new \a15lam\PhpWemo\WemoClient($device['ip'], $device['port']);
+            $deviceClass = $device['class_name'];
+            $myDevice = new $deviceClass($device['id'], $client);
+            $state = $myDevice->state();
+            if ($state == 1 || $state == 8) {
+                $myDevice->Off();
+            } else {
+                $myDevice->On();
+            }
+            $state = $myDevice->state();
+        }
+        return $state;
     }
 
 }

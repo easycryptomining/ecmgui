@@ -86,7 +86,6 @@ function powerToggle(input) {
     var state = input.prop('checked');
     var id = input.prop('id');
     var name = input.data("name");
-    var entity = input.data("entity");
     if (state === false) {
         if (!confirm('Power OFF ' + name + '?')) {
             $(this).bootstrapToggle('on');
@@ -100,8 +99,7 @@ function powerToggle(input) {
         dataType: 'JSON',
         data: {
             'id': id,
-            'state': state,
-            'entity': entity
+            'state': state
         },
     });
 }

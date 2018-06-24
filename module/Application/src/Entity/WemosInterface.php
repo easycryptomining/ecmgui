@@ -44,5 +44,20 @@ interface WemosInterface {
      * @return bool
      */
     public function ping();
+    
+    /**
+     * @return array
+     */
+    public function power();
+    
+    /**
+     * @return integer
+     */
+    public function state();
+    
+    /**
+     * @return integer
+     */
+    public function toggle();
 
 }
