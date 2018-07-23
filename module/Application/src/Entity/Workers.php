@@ -288,12 +288,12 @@ class Workers implements WorkersInterface {
         if (!empty($this->name)) {
             $pingresult = exec("ping -c 1 -s 64 $this->name", $outcome, $status);
             if (0 == $status) {
-                $result = true;
+                $result = $this->name;
             } else {
                 if (!empty($this->ip)) {
                     $pingresult = exec("ping -c 1 -s 64 $this->ip", $outcome, $status);
                     if (0 == $status) {
-                        $result = true;
+                        $result = $this->ip;
                     }
                 }
             }
@@ -301,7 +301,7 @@ class Workers implements WorkersInterface {
             if (!empty($this->ip)) {
                 $pingresult = exec("ping -c 1 -s 64 $this->ip", $outcome, $status);
                 if (0 == $status) {
-                    $result = true;
+                    $result = $this->ip;
                 }
             }
         }
@@ -313,12 +313,8 @@ class Workers implements WorkersInterface {
      */
     public function temp() {
         $temp = '-';
-        $workerName = '';
-        if (!empty($this->name)) {
-            $workerName = $this->name;
-        } elseif (!empty($this->ip)) {
-            $workerName = $this->ip;
-        } else {
+        $workerName = $this->ping();
+        if ($workerName === false) {
             $temp = 'Worker must have a name or an ip';
             return $temp;
         }
@@ -373,14 +369,10 @@ class Workers implements WorkersInterface {
      */
     public function uptime() {
         $uptime = '-';
-        $workerName = '';
-        if (!empty($this->name)) {
-            $workerName = $this->name;
-        } elseif (!empty($this->ip)) {
-            $workerName = $this->ip;
-        } else {
-            $uptime = 'Worker must have a name or an ip';
-            return $uptime;
+        $workerName = $this->ping();
+        if ($workerName === false) {
+            $temp = 'Worker must have a name or an ip';
+            return $temp;
         }
 
         $connection = ssh2_connect($workerName, $this->sshport);

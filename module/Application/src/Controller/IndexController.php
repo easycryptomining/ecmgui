@@ -157,6 +157,7 @@ class IndexController extends AbstractActionController {
         }
 
         // Wemo
+        // TODO : only show wemo that are not in workers
         $wemos = $this->wemosService->getWemosByFilter();
         foreach ($wemos as $wemo) {
             $wemosArray[] = [

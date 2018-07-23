@@ -131,14 +131,14 @@ $refreshRate = $settings->refresh * 1000;
                         <div class="col-sm-3 col-md-3 col-lg-3">
                             <?php
                             $panelColor = 'red';
-                            if ($worker['ping'] === true) {
+                            if ($worker['ping'] !== false) {
                                 if ($worker['pool'] === false) {
                                     $panelColor = 'yellow';
                                 } else {
                                     $panelColor = 'green';
                                 }
                                 if ($worker['name'] != $worker['id']) {
-                                    $link = 'http://' . $worker['name'] . ':' . $worker['softwareport'];
+                                    $link = 'http://' . $worker['ping'] . ':' . $worker['softwareport'];
                                     $hash_refresh .= 'getHash("' . $link . '", "' . $worker['name'] . '-hash");';
                                 }
                                 if ($worker['ssh'] === true) {
@@ -158,7 +158,7 @@ $refreshRate = $settings->refresh * 1000;
                                             <span class="text-uppercase blink-on-change"><strong><?= $worker['name'] ?></strong></span>
                                         </div>
                                         <div class="col-xs-9 text-right">
-                                            <?php if ($worker['ping'] === true) : ?>
+                                            <?php if ($worker['ping'] !== false) : ?>
                                                 <span class="blink-on-change" id="<?= $worker['name'] ?>-hash">-</span> H/s
                                             <?php else : ?>
                                                 <span class="text-uppercase">down</span>
@@ -167,7 +167,7 @@ $refreshRate = $settings->refresh * 1000;
                                     </div>
                                 </div>
                                 <div class="panel-body">
-                                    <?php if ($worker['ping'] === true) : ?>
+                                    <?php if ($worker['ping'] !== false) : ?>
                                         <?php if ($worker['ssh'] === true) : ?>
                                             <div class="row">
                                                 <div class="col-xs-3">
@@ -194,13 +194,13 @@ $refreshRate = $settings->refresh * 1000;
                                             </div>
                                             <div class="col-xs-9 text-right">
                                                 <span class="blink-on-change" id="<?= $worker['name'] ?>-power">-</span> W <br />
-                                                <?php if ($worker['ping'] === true) : ?>
+                                                <?php if ($worker['ping'] !== false) : ?>
                                                     <?= $worker['kwh'] ?> kWh / year <br />
                                                     <?= $worker['amp'] ?> A
                                                 <?php endif; ?>
                                             </div>
                                         </div>
-                                        <?php if ($worker['ping'] === true) : ?>
+                                        <?php if ($worker['ping'] !== false) : ?>
                                             <div class="row">
                                                 <div class="col-xs-3">
                                                     Cost
@@ -216,7 +216,7 @@ $refreshRate = $settings->refresh * 1000;
                                 <div class="panel-footer">
                                     <div class="row">
                                         <div class="col-xs-6">
-                                            <?php if ($worker['ping'] === true) : ?>
+                                            <?php if ($worker['ping'] !== false) : ?>
                                                 <a href="<?= $link ?>" target="_blank">View worker</a>
                                             <?php endif; ?>
                                         </div>
