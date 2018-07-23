@@ -6,7 +6,7 @@ use Zend\ModuleManager\Feature\ConfigProviderInterface;
 
 class Module implements ConfigProviderInterface {
 
-    const VERSION = '2.1';
+    const VERSION = '2.2';
     const APP = 'EcmGui';
 
     public function getConfig() {
